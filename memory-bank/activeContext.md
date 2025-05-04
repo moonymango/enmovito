@@ -29,6 +29,12 @@ The current focus is on:
 
 ### UI Improvements
 
+- Moved the theme and temperature unit selection widgets to the bottom of the control pane
+  - Provides better organization of the UI elements
+  - Keeps the most frequently used controls at the top
+- Reordered the widgets to place temperature unit selection above theme selection
+  - More logical grouping of related settings
+  - Improves user workflow when changing settings
 - Added a "Select All Visible" button to quickly select all parameters currently visible in the list
   - Particularly useful when a category filter is applied
   - Makes it easy to select all parameters in a specific category with just two clicks

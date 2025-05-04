@@ -67,8 +67,11 @@ To create a standalone executable using PyInstaller:
 # Using the spec file (recommended)
 /home/moonymango/venv/qt/bin/pyinstaller engine_data_visualizer.spec
 
-# Or using command-line arguments
+# Or using command-line arguments (with example logs)
 /home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py
+
+# Or using command-line arguments (without example logs)
+/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" engine_data_visualizer.py
 ```
 
 ### Dependencies
@@ -96,7 +99,9 @@ plotly>=4.14.0
    - PyInstaller is used to create standalone executables
    - Creates self-contained packages for Linux and Windows
    - Includes all necessary dependencies and resources
-   - Command: `pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py`
+   - Command with example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py`
+   - Command without example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" engine_data_visualizer.py`
+   - Preferred method: Use the spec file with `pyinstaller engine_data_visualizer.spec`
 
 ## Technical Constraints
 

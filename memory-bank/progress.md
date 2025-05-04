@@ -221,6 +221,8 @@ Based on experience and user feedback, the project is evolving toward:
    - Enhanced user interface with individual plot management
 
 5. **UI Enhancements** - *Completed*
+   - Moved theme and temperature unit selection widgets to the bottom of the control pane
+   - Reordered widgets to place temperature unit selection above theme selection
    - Added "Select All Visible" button for quick parameter selection
    - Added "Clear Selection" button to deselect all parameters at once
    - Implemented dark theme support for improved visual comfort
@@ -239,7 +241,7 @@ Based on experience and user feedback, the project is evolving toward:
 1. **Application Packaging** - *Partially Completed*
    - ✅ Create self-contained executable for Linux
    - 🔲 Create self-contained executable for Windows
-   - ✅ Include all necessary dependencies and resources (themes, example logs)
+   - ✅ Include all necessary dependencies and resources (themes only, example logs excluded)
 
 2. **Performance Optimization** - *In Progress*
    - Data decimation implementation
