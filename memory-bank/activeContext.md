@@ -14,10 +14,12 @@ The Enmovito project is now in a fully functional state with core visualization 
 8. Synchronize x-axis zooming while maintaining independent y-axis scales
 9. Support dark theme for improved visual comfort
 10. Clear all selected parameters with a single click
+11. Resize plots within tabs using splitters
+12. Use any parameter (including time) as X-axis for plots
 
 The current focus is on:
 
-- Packaging the application into self-contained executables for Linux and Windows
+- Optimizing the application for different platforms
 - Ensuring robust handling of different CSV file formats
 - Improving visualization performance with large datasets
 - Adding more advanced analysis capabilities

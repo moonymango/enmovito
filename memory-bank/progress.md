@@ -2,11 +2,11 @@
 
 ## Current Status
 
-Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities. Recent additions include dark theme support and a "Clear Selection" button for improved usability.
+Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities. Recent additions include dark theme support, resizable plots, unified X-axis parameter selection, and a standalone executable package.
 
 ### Development Status: Beta
 
-The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes and UI enhancements have significantly improved stability and usability. Work is currently underway to package the application into self-contained executables for Linux and Windows.
+The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes and UI enhancements have significantly improved stability and usability. The application has been successfully packaged into a self-contained executable for Linux, making it easier to distribute and use.
 
 ## What Works
 
@@ -28,6 +28,8 @@ The application is stable for its core functionality but still has areas for imp
 - Tab-based visualization switching
 - Individual clear buttons for each plot
 - Automatic parameter deselection after plot generation
+- Resizable plots within tabs using splitters
+- Unified X-axis parameter selection for all plot types
 
 ✅ **Time Series Visualization**
 - Multi-parameter time series plots
@@ -225,13 +227,16 @@ Based on experience and user feedback, the project is evolving toward:
    - Removed global "Clear Plot" buttons in favor of individual plot management
    - Implemented synchronized x-axis zooming with independent y-axis scales
    - Improved plot appearance by removing bright frames around plots
+   - Added resizable plots within tabs using splitters
+   - Unified X-axis parameter selection for all plot types
+   - Created standalone executable for easier distribution
 
 ### Upcoming Milestones
 
-1. **Application Packaging** - *In Progress*
-   - Create self-contained executable for Linux
-   - Create self-contained executable for Windows
-   - Include all necessary dependencies and resources
+1. **Application Packaging** - *Partially Completed*
+   - ✅ Create self-contained executable for Linux
+   - 🔲 Create self-contained executable for Windows
+   - ✅ Include all necessary dependencies and resources (themes, example logs)
 
 2. **Performance Optimization** - *In Progress*
    - Data decimation implementation

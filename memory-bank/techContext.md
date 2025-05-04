@@ -40,13 +40,32 @@
 
 ### Environment Management
 
-The project uses Conda for environment management, as specified in `env.yaml`. Key components include:
+The project uses a dedicated virtual environment for development and execution. The specific virtual environment to use is:
 
-- Python 3.9
-- PyQt5 5.15.9
-- Pandas 2.2.3
-- NumPy 2.0.2
-- Plotly (version specified in requirements.txt)
+```
+/home/moonymango/venv/qt
+```
+
+This virtual environment contains all the necessary dependencies:
+
+- Python 3.12
+- PyQt5 with QtWebEngine support
+- Pandas
+- NumPy
+- Plotly
+- PyInstaller for packaging
+
+To run the application using this virtual environment:
+
+```bash
+/home/moonymango/venv/qt/bin/python engine_data_visualizer.py
+```
+
+To create a standalone executable using PyInstaller:
+
+```bash
+/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py
+```
 
 ### Dependencies
 

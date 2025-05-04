@@ -107,6 +107,14 @@ class EngineDataVisualizer(QMainWindow):
         self.time_column = "Lcl Time"  # Default time column
         self.use_celsius = False  # Default to Fahrenheit
         
+        # Initialize empty lists for backward compatibility
+        self.ts_browsers = []
+        self.xy_browsers = []
+        
+        # Placeholders for error handling
+        self.plot_placeholder = QLabel("Select a log file and parameters to visualize")
+        self.xy_plot_placeholder = QLabel("Select X and Y parameters for XY plot")
+        
         # Create the main widget and layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -222,16 +230,24 @@ class EngineDataVisualizer(QMainWindow):
         file_group.setLayout(file_layout)
         self.control_layout.addWidget(file_group)
         
+        # X-axis selection
+        x_axis_group = QGroupBox("X-Axis Selection")
+        x_axis_layout = QVBoxLayout()
+        
+        x_axis_header = QHBoxLayout()
+        x_axis_header.addWidget(QLabel("X Axis:"))
+        self.x_axis_combo = QComboBox()
+        x_axis_header.addWidget(self.x_axis_combo)
+        x_axis_layout.addLayout(x_axis_header)
+        
+        x_axis_group.setLayout(x_axis_layout)
+        self.control_layout.addWidget(x_axis_group)
+        
         # Parameter selection section
         param_group = QGroupBox("Parameter Selection")
         param_layout = QVBoxLayout()
         
-        # Time column selection
-        time_layout = QHBoxLayout()
-        time_layout.addWidget(QLabel("Time Column:"))
-        self.time_combo = QComboBox()
-        time_layout.addWidget(self.time_combo)
-        param_layout.addLayout(time_layout)
+        # No separate time column selection needed
         
         # Parameter list with selection controls
         param_list_header = QHBoxLayout()
@@ -364,23 +380,36 @@ class EngineDataVisualizer(QMainWindow):
     
     def regenerate_plots_with_new_unit(self):
         """Regenerate all existing plots with the new temperature unit."""
-        # Clear existing plots
-        self.clear_time_series_plot()
-        self.clear_xy_plot()
-        
-        # Show a message to the user
-        self.plot_placeholder.setText(
-            f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
-            "Please generate new plots."
-        )
-        self.xy_plot_placeholder.setText(
-            f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
-            "Please generate new XY plots."
-        )
-        
-        # Make placeholders visible
-        self.plot_placeholder.setVisible(True)
-        self.xy_plot_placeholder.setVisible(True)
+        # Clear all plots from all tabs
+        for tab_index in list(self.tab_plot_browsers.keys()):
+            # Get the tab
+            tab = self.plot_tabs.widget(tab_index)
+            if tab:
+                # Clear all plots from this tab
+                for browser, container in self.tab_plot_browsers[tab_index]:
+                    container.setParent(None)
+                
+                # Clear the list
+                self.tab_plot_browsers[tab_index] = []
+                
+                # Add a placeholder
+                tab_layout = tab.layout()
+                
+                # Clear the tab layout
+                while tab_layout.count():
+                    item = tab_layout.takeAt(0)
+                    widget = item.widget()
+                    if widget:
+                        widget.setParent(None)
+                
+                # Add a placeholder
+                placeholder = QLabel(
+                    f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
+                    "Please generate new plots."
+                )
+                placeholder.setAlignment(Qt.AlignCenter)
+                placeholder.setFont(QFont("Arial", 14))
+                tab_layout.addWidget(placeholder)
     
     def get_temp_unit_name(self):
         """Get the name of the current temperature unit."""
@@ -391,66 +420,23 @@ class EngineDataVisualizer(QMainWindow):
         return (f_value - 32) * 5/9
     
     def setup_viz_panel(self):
-        # Create tabs for different visualization types
-        self.viz_tabs = QTabWidget()
-        self.viz_layout.addWidget(self.viz_tabs)
+        # Create a tab widget for multiple plot workspaces
+        self.plot_tabs = QTabWidget()
+        self.plot_tabs.setTabsClosable(True)  # Allow tabs to be closed
+        self.plot_tabs.tabCloseRequested.connect(self.close_plot_tab)
+        self.viz_layout.addWidget(self.plot_tabs)
         
-        # Time Series tab
-        self.time_series_tab = QWidget()
-        self.time_series_layout = QVBoxLayout(self.time_series_tab)
-        self.viz_tabs.addTab(self.time_series_tab, "Time Series")
+        # Add a "+" tab for creating new tabs
+        self.add_tab_button = QPushButton("+")
+        self.add_tab_button.setFixedSize(30, 24)
+        self.add_tab_button.clicked.connect(self.add_plot_tab)
+        self.plot_tabs.setCornerWidget(self.add_tab_button, Qt.TopRightCorner)
         
-        # Add a spacer at the top for consistent layout
-        self.time_series_layout.addSpacing(10)
+        # Dictionary to store plot references for each tab
+        self.tab_plot_browsers = {}
         
-        # Placeholder for the plot
-        self.plot_placeholder = QLabel(
-            "Select a log file and parameters to visualize"
-        )
-        self.plot_placeholder.setAlignment(Qt.AlignCenter)
-        self.plot_placeholder.setFont(QFont("Arial", 14))
-        self.time_series_layout.addWidget(self.plot_placeholder)
-        
-        # Store references to browser widgets and their containers
-        self.ts_browsers = []
-        
-        # XY Plot tab
-        self.xy_plot_tab = QWidget()
-        self.xy_plot_layout = QVBoxLayout(self.xy_plot_tab)
-        self.viz_tabs.addTab(self.xy_plot_tab, "XY Plot")
-        
-        # Add a spacer at the top for consistent layout
-        self.xy_plot_layout.addSpacing(10)
-        
-        # Store references to browser widgets and their containers
-        self.xy_browsers = []
-        
-        # XY Plot controls
-        xy_controls = QWidget()
-        xy_controls_layout = QHBoxLayout(xy_controls)
-        
-        xy_controls_layout.addWidget(QLabel("X Axis:"))
-        self.x_axis_combo = QComboBox()
-        xy_controls_layout.addWidget(self.x_axis_combo)
-        
-        xy_controls_layout.addWidget(QLabel("Y Axis:"))
-        self.y_axis_combo = QComboBox()
-        xy_controls_layout.addWidget(self.y_axis_combo)
-        
-        self.xy_plot_button = QPushButton("Generate XY Plot")
-        self.xy_plot_button.clicked.connect(self.generate_xy_plot)
-        self.xy_plot_button.setEnabled(False)
-        xy_controls_layout.addWidget(self.xy_plot_button)
-        
-        self.xy_plot_layout.addWidget(xy_controls)
-        
-        # Placeholder for the XY plot
-        self.xy_plot_placeholder = QLabel(
-            "Select X and Y parameters for XY plot"
-        )
-        self.xy_plot_placeholder.setAlignment(Qt.AlignCenter)
-        self.xy_plot_placeholder.setFont(QFont("Arial", 14))
-        self.xy_plot_layout.addWidget(self.xy_plot_placeholder)
+        # Create the first tab
+        self.add_plot_tab()
 
     def select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -516,22 +502,6 @@ class EngineDataVisualizer(QMainWindow):
             # Get filtered column names
             all_columns = self.df.columns.tolist()
             
-            # Update time column combo box with full names
-            self.time_combo.clear()
-            time_columns = [
-                col for col in all_columns 
-                if 'time' in col.lower() or 'date' in col.lower()
-            ]
-            time_column_full_names = [self.abbr_to_full.get(col, col) for col in time_columns]
-            self.time_combo.addItems(time_column_full_names)
-            
-            # Find the index of "Lcl Time" if it exists
-            lcl_time_index = (
-                [col.lower() for col in time_columns].index("lcl time") 
-                if "lcl time" in [col.lower() for col in time_columns] else 0
-            )
-            self.time_combo.setCurrentIndex(lcl_time_index)
-            
             # Get numeric columns for plotting
             self.numeric_columns = self.df.select_dtypes(include=[np.number]).columns.tolist()
             
@@ -541,12 +511,6 @@ class EngineDataVisualizer(QMainWindow):
                 # Get the full name from the mapping
                 display_name = self.abbr_to_full.get(col, col)
                 display_columns.append(display_name)
-            
-            # Create display names for numeric columns
-            numeric_display_columns = []
-            for col in self.numeric_columns:
-                display_name = self.abbr_to_full.get(col, col)
-                numeric_display_columns.append(display_name)
             
             # Update parameter list with full names
             self.param_list.clear()
@@ -562,15 +526,24 @@ class EngineDataVisualizer(QMainWindow):
                     item.setFont(font)
                 self.param_list.addItem(item)
             
-            # Update XY plot combo boxes with numeric columns only (using full names)
+            # Update X-axis dropdown with ALL columns (using full names)
             self.x_axis_combo.clear()
-            self.y_axis_combo.clear()
-            self.x_axis_combo.addItems(numeric_display_columns)
-            self.y_axis_combo.addItems(numeric_display_columns)
+            self.x_axis_combo.addItems(display_columns)
             
-            # Enable plot buttons and selection buttons
+            # Set default X-axis to "Lcl Time" if it exists
+            lcl_time_index = -1
+            for i, col in enumerate(all_columns):
+                if col.lower() == "lcl time":
+                    lcl_time_index = i
+                    break
+            
+            if lcl_time_index >= 0:
+                self.x_axis_combo.setCurrentIndex(lcl_time_index)
+            
+            # We no longer need to update the Y parameter list as it's been removed
+            
+            # Enable plot button and selection buttons
             self.plot_button.setEnabled(True)
-            self.xy_plot_button.setEnabled(True)
             self.select_all_visible_btn.setEnabled(True)
             self.clear_selection_btn.setEnabled(True)
             
@@ -660,9 +633,18 @@ class EngineDataVisualizer(QMainWindow):
         selected_params = numeric_params
         selected_display_names = numeric_display_names
         
-        # Get the actual column name for the selected time column
-        time_display = self.time_combo.currentText()
-        time_column = self.full_to_abbr.get(time_display, time_display)
+        # Get the actual column name for the selected X-axis parameter
+        x_display = self.x_axis_combo.currentText()
+        x_param = self.full_to_abbr.get(x_display, x_display)
+        
+        # Get the unit for the X parameter
+        x_unit = self.extract_unit(x_display)
+        
+        # Check if we need to convert X temperature values
+        x_values = self.df[x_param].copy()
+        if self.use_celsius and "deg F" in x_unit:
+            x_values = x_values.apply(self.fahrenheit_to_celsius)
+            x_display = x_display.replace("deg F", "deg C")
         
         # Group parameters by units
         param_units = {}
@@ -698,7 +680,7 @@ class EngineDataVisualizer(QMainWindow):
                 
                 fig.add_trace(
                     go.Scatter(
-                        x=self.df[time_column], 
+                        x=x_values, 
                         y=y_values, 
                         name=display_name
                     ),
@@ -847,9 +829,21 @@ class EngineDataVisualizer(QMainWindow):
             
         print(f"Plot saved to: {plot_path}")
         
-        # If this is the first plot, hide the placeholder
-        if not self.ts_browsers:
-            self.plot_placeholder.setVisible(False)
+        # Get the current tab and splitter
+        current_tab_index = self.plot_tabs.currentIndex()
+        current_tab = self.plot_tabs.widget(current_tab_index)
+        splitter = self.tab_splitters.get(current_tab_index)
+        
+        if not splitter:
+            return
+        
+        # If this is the first plot in the tab, remove the placeholder
+        if current_tab_index not in self.tab_plot_browsers or not self.tab_plot_browsers[current_tab_index]:
+            # Clear the splitter
+            while splitter.count():
+                widget = splitter.widget(0)
+                if widget:
+                    widget.setParent(None)
         
         # Create a container for the plot and its clear button
         plot_container = QWidget()
@@ -858,7 +852,7 @@ class EngineDataVisualizer(QMainWindow):
         # Add a clear button for this specific plot
         button_layout = QHBoxLayout()
         clear_button = QPushButton(f"Clear: {', '.join(selected_display_names)}")
-        clear_button.clicked.connect(lambda: self.clear_specific_ts_plot(plot_container))
+        clear_button.clicked.connect(lambda: self.clear_specific_plot(plot_container, current_tab_index))
         button_layout.addWidget(clear_button)
         button_layout.addStretch()
         plot_layout.addLayout(button_layout)
@@ -869,11 +863,14 @@ class EngineDataVisualizer(QMainWindow):
         browser.load(QUrl.fromLocalFile(plot_path))
         plot_layout.addWidget(browser, 1)  # Add with stretch factor of 1
         
-        # Add the container to the layout
-        self.time_series_layout.addWidget(plot_container)
+        # Add the container to the splitter
+        splitter.addWidget(plot_container)
         
-        # Store references to the browser and container
-        self.ts_browsers.append((browser, plot_container))
+        # Store references to the browser and container for the current tab
+        if current_tab_index not in self.tab_plot_browsers:
+            self.tab_plot_browsers[current_tab_index] = []
+        
+        self.tab_plot_browsers[current_tab_index].append((browser, plot_container))
         
         # No need to enable the main clear button as it's been removed
         
@@ -881,53 +878,193 @@ class EngineDataVisualizer(QMainWindow):
         self.param_list.clearSelection()
 
     def generate_xy_plot(self):
+        # Get the selected X parameter
         x_display = self.x_axis_combo.currentText()
-        y_display = self.y_axis_combo.currentText()
-        
-        # Convert display names to actual column names
         x_param = self.full_to_abbr.get(x_display, x_display)
-        y_param = self.full_to_abbr.get(y_display, y_display)
         
-        if not x_param or not y_param:
-            self.xy_plot_placeholder.setText("Please select X and Y parameters")
+        # Get the selected Y parameters from the parameter list
+        selected_items = self.param_list.selectedItems()
+        selected_params = [item.data(Qt.UserRole) for item in selected_items]
+        selected_display_names = [item.text() for item in selected_items]
+        
+        if not x_param:
+            # Show a message in the current tab
+            current_tab_index = self.plot_tabs.currentIndex()
+            current_tab = self.plot_tabs.widget(current_tab_index)
+            current_tab_layout = current_tab.layout()
+            
+            # Clear the tab layout
+            while current_tab_layout.count():
+                item = current_tab_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.setParent(None)
+            
+            # Add a placeholder
+            placeholder = QLabel("Please select an X parameter")
+            placeholder.setAlignment(Qt.AlignCenter)
+            placeholder.setFont(QFont("Arial", 14))
+            current_tab_layout.addWidget(placeholder)
             return
         
-        # Create the XY plot
-        fig = go.Figure()
+        if not selected_params:
+            # Show a message in the current tab
+            current_tab_index = self.plot_tabs.currentIndex()
+            current_tab = self.plot_tabs.widget(current_tab_index)
+            current_tab_layout = current_tab.layout()
+            
+            # Clear the tab layout
+            while current_tab_layout.count():
+                item = current_tab_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.setParent(None)
+            
+            # Add a placeholder
+            placeholder = QLabel("Please select at least one Y parameter")
+            placeholder.setAlignment(Qt.AlignCenter)
+            placeholder.setFont(QFont("Arial", 14))
+            current_tab_layout.addWidget(placeholder)
+            return
         
-        # Get the units for x and y parameters
+        # Filter out non-numeric parameters
+        numeric_params = []
+        numeric_display_names = []
+        for i, param in enumerate(selected_params):
+            if param in self.numeric_columns:
+                numeric_params.append(param)
+                numeric_display_names.append(selected_display_names[i])
+        
+        if not numeric_params:
+            # Show a message in the current tab
+            current_tab_index = self.plot_tabs.currentIndex()
+            current_tab = self.plot_tabs.widget(current_tab_index)
+            current_tab_layout = current_tab.layout()
+            
+            # Clear the tab layout
+            while current_tab_layout.count():
+                item = current_tab_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.setParent(None)
+            
+            # Add a placeholder
+            placeholder = QLabel("Please select at least one numeric Y parameter")
+            placeholder.setAlignment(Qt.AlignCenter)
+            placeholder.setFont(QFont("Arial", 14))
+            current_tab_layout.addWidget(placeholder)
+            return
+        
+        # Use only numeric parameters for plotting
+        selected_y_params = numeric_params
+        selected_y_display_names = numeric_display_names
+        
+        # Get the unit for the X parameter
         x_unit = self.extract_unit(x_display)
-        y_unit = self.extract_unit(y_display)
         
-        # Check if we need to convert temperature values
+        # Check if we need to convert X temperature values
         x_values = self.df[x_param].copy()
-        y_values = self.df[y_param].copy()
-        
-        # Convert x-axis values if needed
         if self.use_celsius and "deg F" in x_unit:
             x_values = x_values.apply(self.fahrenheit_to_celsius)
             x_display = x_display.replace("deg F", "deg C")
         
-        # Convert y-axis values if needed
-        if self.use_celsius and "deg F" in y_unit:
-            y_values = y_values.apply(self.fahrenheit_to_celsius)
-            y_display = y_display.replace("deg F", "deg C")
+        # Group Y parameters by units
+        param_units = {}
+        for i, display_name in enumerate(selected_y_display_names):
+            unit = self.extract_unit(display_name)
+            if unit not in param_units:
+                param_units[unit] = []
+            param_units[unit].append((selected_y_params[i], display_name))
         
-        fig.add_trace(
-            go.Scatter(
-                x=x_values, 
-                y=y_values, 
-                mode='markers', 
-                name=f'{y_param} vs {x_param}'
+        # Create a subplot for each unit group
+        unit_groups = list(param_units.keys())
+        
+        if len(unit_groups) == 1:
+            # If there's only one unit group, create a single plot
+            fig = go.Figure()
+            
+            # Add traces for each Y parameter
+            for param, display_name in param_units[unit_groups[0]]:
+                # Check if this is a temperature parameter and if we need to convert to Celsius
+                y_values = self.df[param].copy()
+                y_display = display_name
+                
+                # Convert Y temperature values if needed
+                if self.use_celsius and "deg F" in unit_groups[0]:
+                    y_values = y_values.apply(self.fahrenheit_to_celsius)
+                    y_display = y_display.replace("deg F", "deg C")
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=x_values, 
+                        y=y_values, 
+                        mode='markers', 
+                        name=y_display
+                    )
+                )
+            
+            # Set the title and axis labels
+            fig.update_layout(
+                title_text=f"XY Plot: Multiple Parameters vs {x_display}",
+                xaxis_title=x_display,
+                yaxis_title=unit_groups[0] if unit_groups[0] != "Unknown" else ""
             )
-        )
+        else:
+            # If there are multiple unit groups, create subplots
+            fig = make_subplots(
+                rows=len(unit_groups), 
+                cols=1, 
+                shared_xaxes=True,  # Share x-axes between subplots
+                vertical_spacing=0.02,
+                subplot_titles=[f"Unit: {unit}" for unit in unit_groups]
+            )
+            
+            # Add traces to the appropriate subplot based on unit
+            for i, unit in enumerate(unit_groups):
+                for param, display_name in param_units[unit]:
+                    # Check if this is a temperature parameter and if we need to convert to Celsius
+                    y_values = self.df[param].copy()
+                    unit_label = unit
+                    
+                    # Convert temperature values if needed
+                    if self.use_celsius and "deg F" in unit:
+                        y_values = y_values.apply(self.fahrenheit_to_celsius)
+                        unit_label = unit.replace("deg F", "deg C")
+                        # Update subplot title
+                        fig.layout.annotations[i].text = f"Unit: {unit_label}"
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=x_values, 
+                            y=y_values, 
+                            mode='markers', 
+                            name=display_name
+                        ),
+                        row=i+1, col=1
+                    )
+            
+            # Configure subplot linking for synchronized x-axis zooming only
+            # This allows independent y-axis scales for each subplot
+            if len(unit_groups) > 1:
+                # Create a list of all subplot references
+                subplot_refs = [f"xy{i+1}" for i in range(len(unit_groups))]
+                
+                # Link only the x-axes between subplots
+                # The first subplot's x-axis will be the reference
+                for i in range(1, len(subplot_refs)):
+                    # Link each subplot's x-axis to the first subplot's x-axis
+                    fig._layout_obj['xaxis' + subplot_refs[i][-1]]['matches'] = 'x' + subplot_refs[0][-1]
+            
+            # Set the title
+            fig.update_layout(
+                title_text=f"XY Plot: Multiple Parameters vs {x_display}"
+            )
         
         # Update layout with responsive sizing, mouse wheel zoom, and hover features
         fig.update_layout(
             autosize=True,  # Enable autosize for responsive behavior
-            title_text=f"{y_display} vs {x_display}",
+            # Title is already set above based on the number of unit groups
             xaxis_title=x_display,
-            yaxis_title=y_display,
             margin=dict(l=50, r=50, t=100, b=50),  # Add some margin for better appearance
             # Enable mouse wheel zoom
             modebar_add=['scrollZoom'],
@@ -1023,9 +1160,20 @@ class EngineDataVisualizer(QMainWindow):
             
         print(f"Plot saved to: {plot_path}")
         
-        # If this is the first plot, hide the placeholder
-        if not self.xy_browsers:
-            self.xy_plot_placeholder.setVisible(False)
+        # Get the current tab and splitter
+        current_tab_index = self.plot_tabs.currentIndex()
+        splitter = self.tab_splitters.get(current_tab_index)
+        
+        if not splitter:
+            return
+        
+        # If this is the first plot in the tab, remove the placeholder
+        if current_tab_index not in self.tab_plot_browsers or not self.tab_plot_browsers[current_tab_index]:
+            # Clear the splitter
+            while splitter.count():
+                widget = splitter.widget(0)
+                if widget:
+                    widget.setParent(None)
         
         # Create a container for the plot and its clear button
         plot_container = QWidget()
@@ -1033,8 +1181,17 @@ class EngineDataVisualizer(QMainWindow):
         
         # Add a clear button for this specific plot
         button_layout = QHBoxLayout()
-        clear_button = QPushButton(f"Clear: {y_display} vs {x_display}")
-        clear_button.clicked.connect(lambda: self.clear_specific_xy_plot(plot_container))
+        
+        # Create a descriptive label for the clear button
+        if len(selected_y_display_names) <= 3:
+            # If there are 3 or fewer Y parameters, show all of them
+            y_params_text = ", ".join(selected_y_display_names)
+        else:
+            # If there are more than 3, show the first 2 and the count
+            y_params_text = f"{selected_y_display_names[0]}, {selected_y_display_names[1]} and {len(selected_y_display_names) - 2} more"
+        
+        clear_button = QPushButton(f"Clear: {y_params_text} vs {x_display}")
+        clear_button.clicked.connect(lambda: self.clear_specific_plot(plot_container, current_tab_index))
         button_layout.addWidget(clear_button)
         button_layout.addStretch()
         plot_layout.addLayout(button_layout)
@@ -1043,47 +1200,43 @@ class EngineDataVisualizer(QMainWindow):
         browser = ZoomableWebEngineView()
         browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         browser.load(QUrl.fromLocalFile(plot_path))
-        plot_layout.addWidget(browser)
+        plot_layout.addWidget(browser, 1)  # Add with stretch factor of 1
         
-        # Add the container to the layout
-        self.xy_plot_layout.addWidget(plot_container)
+        # Add the container to the splitter
+        splitter.addWidget(plot_container)
         
-        # Store references to the browser and container
-        self.xy_browsers.append((browser, plot_container))
+        # Store references to the browser and container for the current tab
+        if current_tab_index not in self.tab_plot_browsers:
+            self.tab_plot_browsers[current_tab_index] = []
+        
+        self.tab_plot_browsers[current_tab_index].append((browser, plot_container))
         
         # No need to enable the main clear button as it's been removed
         
         # No need to clear parameter selection for XY plot as it uses combo boxes
 
-    def clear_specific_ts_plot(self, container):
-        """Clear a specific time series plot."""
+    def clear_specific_plot(self, container, tab_index):
+        """Clear a specific plot from a tab."""
         # Find and remove the browser and container from our list
-        for i, (browser, cont) in enumerate(self.ts_browsers):
-            if cont == container:
-                self.ts_browsers.pop(i)
-                break
+        if tab_index in self.tab_plot_browsers:
+            for i, (browser, cont) in enumerate(self.tab_plot_browsers[tab_index]):
+                if cont == container:
+                    self.tab_plot_browsers[tab_index].pop(i)
+                    break
         
         # Remove the container from the layout
         container.setParent(None)
         
-        # If no more plots, show the placeholder
-        if not self.ts_browsers:
-            self.plot_placeholder.setVisible(True)
-    
-    def clear_specific_xy_plot(self, container):
-        """Clear a specific XY plot."""
-        # Find and remove the browser and container from our list
-        for i, (browser, cont) in enumerate(self.xy_browsers):
-            if cont == container:
-                self.xy_browsers.pop(i)
-                break
-        
-        # Remove the container from the layout
-        container.setParent(None)
-        
-        # If no more plots, show the placeholder
-        if not self.xy_browsers:
-            self.xy_plot_placeholder.setVisible(True)
+        # If no more plots in this tab, show a placeholder
+        if tab_index in self.tab_plot_browsers and not self.tab_plot_browsers[tab_index]:
+            tab = self.plot_tabs.widget(tab_index)
+            tab_layout = tab.layout()
+            
+            # Add a placeholder
+            placeholder = QLabel("Select parameters and click 'Generate Plot' to create visualizations")
+            placeholder.setAlignment(Qt.AlignCenter)
+            placeholder.setFont(QFont("Arial", 14))
+            tab_layout.addWidget(placeholder)
     
     def clear_time_series_plot(self):
         """Clear all time series plots and restore the placeholder."""
@@ -1137,6 +1290,75 @@ class EngineDataVisualizer(QMainWindow):
     def clear_parameter_selection(self):
         """Clear all selected parameters in the list."""
         self.param_list.clearSelection()
+    
+    def select_all_visible_y_parameters(self):
+        """Select all Y parameters that are currently visible in the list."""
+        # First, clear current selection
+        self.y_param_list.clearSelection()
+        
+        # Then select all visible items
+        for i in range(self.y_param_list.count()):
+            item = self.y_param_list.item(i)
+            if not item.isHidden():
+                item.setSelected(True)
+    
+    def clear_y_parameter_selection(self):
+        """Clear all selected Y parameters in the list."""
+        self.y_param_list.clearSelection()
+    
+    def add_plot_tab(self):
+        """Add a new plot tab to the workspace."""
+        # Create a new tab with a splitter for resizable plots
+        tab = QWidget()
+        tab_layout = QVBoxLayout(tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for maximum space
+        
+        # Create a splitter for resizable plots
+        self.tab_splitters = getattr(self, 'tab_splitters', {})
+        splitter = QSplitter(Qt.Vertical)
+        splitter.setChildrenCollapsible(False)  # Prevent plots from being collapsed to zero size
+        tab_layout.addWidget(splitter)
+        
+        # Add a placeholder for the tab
+        placeholder = QLabel("Select parameters and click 'Generate Plot' to create visualizations")
+        placeholder.setAlignment(Qt.AlignCenter)
+        placeholder.setFont(QFont("Arial", 14))
+        splitter.addWidget(placeholder)
+        
+        # Add the tab to the tab widget
+        tab_index = self.plot_tabs.addTab(tab, f"Plot {self.plot_tabs.count() + 1}")
+        
+        # Store the splitter reference
+        self.tab_splitters[tab_index] = splitter
+        
+        # Select the new tab
+        self.plot_tabs.setCurrentIndex(tab_index)
+        
+        # Initialize the plot browsers list for this tab
+        self.tab_plot_browsers[tab_index] = []
+        
+        return tab_index
+    
+    def close_plot_tab(self, index):
+        """Close a plot tab."""
+        # Don't close if it's the last tab
+        if self.plot_tabs.count() <= 1:
+            return
+        
+        # Remove the tab's plot browsers from our tracking
+        if index in self.tab_plot_browsers:
+            del self.tab_plot_browsers[index]
+        
+        # Remove the tab
+        self.plot_tabs.removeTab(index)
+        
+        # Renumber the remaining tabs
+        for i in range(self.plot_tabs.count()):
+            self.plot_tabs.setTabText(i, f"Plot {i + 1}")
+            
+            # Update the keys in the tab_plot_browsers dictionary
+            if i + 1 in self.tab_plot_browsers and i != i + 1:
+                self.tab_plot_browsers[i] = self.tab_plot_browsers.pop(i + 1)
 
 
 if __name__ == "__main__":
