@@ -53,7 +53,7 @@ This virtual environment contains all the necessary dependencies:
 - Pandas
 - NumPy
 - Plotly
-- PyInstaller for packaging
+- PyInstaller for packaging (already installed in the virtual environment)
 
 To run the application using this virtual environment:
 
@@ -64,6 +64,10 @@ To run the application using this virtual environment:
 To create a standalone executable using PyInstaller:
 
 ```bash
+# Using the spec file (recommended)
+/home/moonymango/venv/qt/bin/pyinstaller engine_data_visualizer.spec
+
+# Or using command-line arguments
 /home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py
 ```
 

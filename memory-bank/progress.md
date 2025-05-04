@@ -228,7 +228,10 @@ Based on experience and user feedback, the project is evolving toward:
    - Implemented synchronized x-axis zooming with independent y-axis scales
    - Improved plot appearance by removing bright frames around plots
    - Added resizable plots within tabs using splitters
-   - Unified X-axis parameter selection for all plot types
+   - Replaced X-axis dropdown with a list widget for consistent UI experience
+   - Added separate category filter buttons for X-axis parameter selection
+   - Fixed temperature conversion when Celsius is selected as the temperature unit
+   - Ensured generate button works correctly with both Fahrenheit and Celsius units
    - Created standalone executable for easier distribution
 
 ### Upcoming Milestones

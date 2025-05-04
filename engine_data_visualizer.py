@@ -214,6 +214,20 @@ class EngineDataVisualizer(QMainWindow):
         QApplication.setPalette(light_palette)
     
     def setup_control_panel(self):
+        # Common parameter categories - using abbreviated names
+        # These will be converted to full names when needed
+        self.categories = {
+            "GPS": ["Latitude", "Longitude", "AltGPS", "GndSpd", "TRK"],
+            "Altitude": ["AltP", "AltInd", "VSpd", "AGL"],
+            "Attitude": ["Pitch", "Roll", "HDG"],
+            "Engine": ["E1 RPM", "E1 MAP", "E1 %Pwr", "E1 FFlow", "E1 OilT", "E1 OilP"],
+            "Temperature": [
+                "E1 CHT1", "E1 CHT2", "E1 CHT3", "E1 CHT4", "E1 CHT5", "E1 CHT6",
+                "E1 EGT1", "E1 EGT2", "E1 EGT3", "E1 EGT4", "E1 EGT5", "E1 EGT6"
+            ],
+            "Electrical": ["Volts1", "Volts2", "Amps1"]
+        }
+        
         # File selection section
         file_group = QGroupBox("File Selection")
         file_layout = QVBoxLayout()
@@ -234,11 +248,41 @@ class EngineDataVisualizer(QMainWindow):
         x_axis_group = QGroupBox("X-Axis Selection")
         x_axis_layout = QVBoxLayout()
         
+        # X-axis parameter list with selection controls
         x_axis_header = QHBoxLayout()
-        x_axis_header.addWidget(QLabel("X Axis:"))
-        self.x_axis_combo = QComboBox()
-        x_axis_header.addWidget(self.x_axis_combo)
+        x_axis_header.addWidget(QLabel("Select X-Axis Parameter:"))
+        
+        # Add "Clear Selection" button for X-axis
+        self.clear_x_selection_btn = QPushButton("Clear Selection")
+        self.clear_x_selection_btn.clicked.connect(self.clear_x_parameter_selection)
+        self.clear_x_selection_btn.setEnabled(False)  # Initially disabled until file is loaded
+        x_axis_header.addWidget(self.clear_x_selection_btn)
+        
         x_axis_layout.addLayout(x_axis_header)
+        
+        # Use a list widget with single selection mode for X-axis
+        self.x_axis_list = QListWidget()
+        self.x_axis_list.setSelectionMode(QListWidget.SingleSelection)  # Only one item can be selected
+        x_axis_layout.addWidget(self.x_axis_list)
+        
+        # Quick parameter category selection for X-axis
+        x_category_layout = QGridLayout()
+        
+        # Create a separate set of category buttons for X-axis
+        row, col = 0, 0
+        self.x_category_buttons = {}
+        for category, params in self.categories.items():
+            btn = QPushButton(category)
+            btn.setProperty("category_params", params)
+            btn.clicked.connect(self.select_x_category)
+            x_category_layout.addWidget(btn, row, col)
+            self.x_category_buttons[category] = btn
+            col += 1
+            if col > 2:  # 3 buttons per row
+                col = 0
+                row += 1
+        
+        x_axis_layout.addLayout(x_category_layout)
         
         x_axis_group.setLayout(x_axis_layout)
         self.control_layout.addWidget(x_axis_group)
@@ -273,20 +317,6 @@ class EngineDataVisualizer(QMainWindow):
         
         # Quick parameter category selection
         category_layout = QGridLayout()
-        
-        # Common parameter categories - using abbreviated names
-        # These will be converted to full names when needed
-        self.categories = {
-            "GPS": ["Latitude", "Longitude", "AltGPS", "GndSpd", "TRK"],
-            "Altitude": ["AltP", "AltInd", "VSpd", "AGL"],
-            "Attitude": ["Pitch", "Roll", "HDG"],
-            "Engine": ["E1 RPM", "E1 MAP", "E1 %Pwr", "E1 FFlow", "E1 OilT", "E1 OilP"],
-            "Temperature": [
-                "E1 CHT1", "E1 CHT2", "E1 CHT3", "E1 CHT4", "E1 CHT5", "E1 CHT6",
-                "E1 EGT1", "E1 EGT2", "E1 EGT3", "E1 EGT4", "E1 EGT5", "E1 EGT6"
-            ],
-            "Electrical": ["Volts1", "Volts2", "Amps1"]
-        }
         
         row, col = 0, 0
         self.category_buttons = {}
@@ -380,36 +410,41 @@ class EngineDataVisualizer(QMainWindow):
     
     def regenerate_plots_with_new_unit(self):
         """Regenerate all existing plots with the new temperature unit."""
+        # Initialize tab_plot_browsers if it doesn't exist
+        if not hasattr(self, 'tab_plot_browsers'):
+            self.tab_plot_browsers = {}
+            
         # Clear all plots from all tabs
         for tab_index in list(self.tab_plot_browsers.keys()):
             # Get the tab
             tab = self.plot_tabs.widget(tab_index)
             if tab:
                 # Clear all plots from this tab
-                for browser, container in self.tab_plot_browsers[tab_index]:
-                    container.setParent(None)
-                
-                # Clear the list
-                self.tab_plot_browsers[tab_index] = []
-                
-                # Add a placeholder
-                tab_layout = tab.layout()
-                
-                # Clear the tab layout
-                while tab_layout.count():
-                    item = tab_layout.takeAt(0)
-                    widget = item.widget()
-                    if widget:
-                        widget.setParent(None)
-                
-                # Add a placeholder
-                placeholder = QLabel(
-                    f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
-                    "Please generate new plots."
-                )
-                placeholder.setAlignment(Qt.AlignCenter)
-                placeholder.setFont(QFont("Arial", 14))
-                tab_layout.addWidget(placeholder)
+                if tab_index in self.tab_plot_browsers and self.tab_plot_browsers[tab_index]:
+                    for browser, container in self.tab_plot_browsers[tab_index]:
+                        container.setParent(None)
+                    
+                    # Clear the list
+                    self.tab_plot_browsers[tab_index] = []
+                    
+                    # Add a placeholder
+                    tab_layout = tab.layout()
+                    
+                    # Clear the tab layout
+                    while tab_layout.count():
+                        item = tab_layout.takeAt(0)
+                        widget = item.widget()
+                        if widget:
+                            widget.setParent(None)
+                    
+                    # Add a placeholder
+                    placeholder = QLabel(
+                        f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
+                        "Please generate new plots."
+                    )
+                    placeholder.setAlignment(Qt.AlignCenter)
+                    placeholder.setFont(QFont("Arial", 14))
+                    tab_layout.addWidget(placeholder)
     
     def get_temp_unit_name(self):
         """Get the name of the current temperature unit."""
@@ -526,9 +561,19 @@ class EngineDataVisualizer(QMainWindow):
                     item.setFont(font)
                 self.param_list.addItem(item)
             
-            # Update X-axis dropdown with ALL columns (using full names)
-            self.x_axis_combo.clear()
-            self.x_axis_combo.addItems(display_columns)
+            # Update X-axis list with ALL columns (using full names)
+            self.x_axis_list.clear()
+            for i, col in enumerate(all_columns):
+                display_name = display_columns[i]
+                item = QListWidgetItem(display_name)
+                # Store the actual column name as item data
+                item.setData(Qt.UserRole, col)
+                # Mark non-numeric columns with a different style
+                if col not in self.numeric_columns:
+                    font = item.font()
+                    font.setItalic(True)
+                    item.setFont(font)
+                self.x_axis_list.addItem(item)
             
             # Set default X-axis to "Lcl Time" if it exists
             lcl_time_index = -1
@@ -538,7 +583,10 @@ class EngineDataVisualizer(QMainWindow):
                     break
             
             if lcl_time_index >= 0:
-                self.x_axis_combo.setCurrentIndex(lcl_time_index)
+                self.x_axis_list.setCurrentRow(lcl_time_index)
+                
+            # Enable the clear X selection button
+            self.clear_x_selection_btn.setEnabled(True)
             
             # We no longer need to update the Y parameter list as it's been removed
             
@@ -559,6 +607,7 @@ class EngineDataVisualizer(QMainWindow):
             self.plot_placeholder.setText(f"Error loading file: {str(e)}")
 
     def select_category(self):
+        """Filter the Y parameter list based on the selected category."""
         sender = self.sender()
         abbr_params = sender.property("category_params")
         category_name = sender.text()
@@ -577,15 +626,15 @@ class EngineDataVisualizer(QMainWindow):
         print(f"Full params: {full_params}")
         
         # Check if we're already filtering for this category
-        if hasattr(self, 'current_filter') and self.current_filter == category_name:
+        if hasattr(self, 'current_y_filter') and self.current_y_filter == category_name:
             # If clicking the same category again, show all parameters
             self.show_all_parameters()
             return
         
         # Store the current filter
-        self.current_filter = category_name
+        self.current_y_filter = category_name
         
-        # Hide all parameters not in this category
+        # Hide all parameters not in this category in the Y parameter list
         for i in range(self.param_list.count()):
             item = self.param_list.item(i)
             if item.text() in full_params:
@@ -595,6 +644,49 @@ class EngineDataVisualizer(QMainWindow):
         
         # Update the category button text to indicate it's active
         for cat, btn in self.category_buttons.items():
+            if cat == category_name:
+                btn.setText(f"[{cat}]")
+            else:
+                btn.setText(cat)
+    
+    def select_x_category(self):
+        """Filter the X-axis list based on the selected category."""
+        sender = self.sender()
+        abbr_params = sender.property("category_params")
+        category_name = sender.text()
+        
+        # Convert abbreviated parameter names to full names
+        full_params = []
+        for abbr in abbr_params:
+            if abbr in self.abbr_to_full:
+                full_params.append(self.abbr_to_full[abbr])
+            else:
+                full_params.append(abbr)  # Keep as is if not found
+        
+        # Debug print
+        print(f"X Category: {category_name}")
+        print(f"X Category params: {abbr_params}")
+        print(f"X Full params: {full_params}")
+        
+        # Check if we're already filtering for this category
+        if hasattr(self, 'current_x_filter') and self.current_x_filter == category_name:
+            # If clicking the same category again, show all parameters
+            self.show_all_x_parameters()
+            return
+        
+        # Store the current filter
+        self.current_x_filter = category_name
+        
+        # Hide all parameters not in this category in the X-axis list
+        for i in range(self.x_axis_list.count()):
+            item = self.x_axis_list.item(i)
+            if item.text() in full_params:
+                item.setHidden(False)
+            else:
+                item.setHidden(True)
+        
+        # Update the category button text to indicate it's active
+        for cat, btn in self.x_category_buttons.items():
             if cat == category_name:
                 btn.setText(f"[{cat}]")
             else:
@@ -633,9 +725,15 @@ class EngineDataVisualizer(QMainWindow):
         selected_params = numeric_params
         selected_display_names = numeric_display_names
         
+        # Get the selected X parameter from the X-axis list
+        selected_x_items = self.x_axis_list.selectedItems()
+        if not selected_x_items:
+            self.plot_placeholder.setText("Please select an X-axis parameter")
+            return
+            
         # Get the actual column name for the selected X-axis parameter
-        x_display = self.x_axis_combo.currentText()
-        x_param = self.full_to_abbr.get(x_display, x_display)
+        x_display = selected_x_items[0].text()
+        x_param = selected_x_items[0].data(Qt.UserRole)
         
         # Get the unit for the X parameter
         x_unit = self.extract_unit(x_display)
@@ -878,9 +976,31 @@ class EngineDataVisualizer(QMainWindow):
         self.param_list.clearSelection()
 
     def generate_xy_plot(self):
-        # Get the selected X parameter
-        x_display = self.x_axis_combo.currentText()
-        x_param = self.full_to_abbr.get(x_display, x_display)
+        # Get the selected X parameter from the X-axis list
+        selected_x_items = self.x_axis_list.selectedItems()
+        if not selected_x_items:
+            # Show a message in the current tab
+            current_tab_index = self.plot_tabs.currentIndex()
+            current_tab = self.plot_tabs.widget(current_tab_index)
+            current_tab_layout = current_tab.layout()
+            
+            # Clear the tab layout
+            while current_tab_layout.count():
+                item = current_tab_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.setParent(None)
+            
+            # Add a placeholder
+            placeholder = QLabel("Please select an X parameter")
+            placeholder.setAlignment(Qt.AlignCenter)
+            placeholder.setFont(QFont("Arial", 14))
+            current_tab_layout.addWidget(placeholder)
+            return
+            
+        # Get the actual column name for the selected X-axis parameter
+        x_display = selected_x_items[0].text()
+        x_param = selected_x_items[0].data(Qt.UserRole)
         
         # Get the selected Y parameters from the parameter list
         selected_items = self.param_list.selectedItems()
@@ -1274,22 +1394,40 @@ class EngineDataVisualizer(QMainWindow):
                 item.setSelected(True)
     
     def show_all_parameters(self):
-        """Show all parameters in the list."""
-        # Show all parameters
+        """Show all parameters in the Y parameter list."""
+        # Show all parameters in the Y parameter list
         for i in range(self.param_list.count()):
             item = self.param_list.item(i)
             item.setHidden(False)
         
-        # Reset all category button texts
+        # Reset all Y category button texts
         for cat, btn in self.category_buttons.items():
             btn.setText(cat)
         
-        # Clear the current filter
-        self.current_filter = None
+        # Clear the current Y filter
+        self.current_y_filter = None
+    
+    def show_all_x_parameters(self):
+        """Show all parameters in the X-axis list."""
+        # Show all parameters in the X-axis list
+        for i in range(self.x_axis_list.count()):
+            item = self.x_axis_list.item(i)
+            item.setHidden(False)
+        
+        # Reset all X category button texts
+        for cat, btn in self.x_category_buttons.items():
+            btn.setText(cat)
+        
+        # Clear the current X filter
+        self.current_x_filter = None
     
     def clear_parameter_selection(self):
         """Clear all selected parameters in the list."""
         self.param_list.clearSelection()
+    
+    def clear_x_parameter_selection(self):
+        """Clear the X-axis parameter selection."""
+        self.x_axis_list.clearSelection()
     
     def select_all_visible_y_parameters(self):
         """Select all Y parameters that are currently visible in the list."""

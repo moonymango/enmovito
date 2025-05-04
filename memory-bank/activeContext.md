@@ -56,6 +56,11 @@ The current focus is on:
   - Added individual clear buttons for each graph
   - Modified category buttons to filter the parameter list instead of selecting parameters
   - Added automatic deselection of parameters after generating a graph
+- Fixed X-axis selection and temperature unit issues
+  - Replaced X-axis dropdown with a list widget for consistent UI experience
+  - Added separate category filter buttons for X-axis parameter selection
+  - Fixed temperature conversion when Celsius is selected as the temperature unit
+  - Ensured generate button works correctly with both Fahrenheit and Celsius units
 
 ### Core Application Development
 
