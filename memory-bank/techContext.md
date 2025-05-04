@@ -69,6 +69,12 @@ plotly>=4.14.0
    - Git is used for version control
    - Standard Python `.gitignore` file is included
 
+3. **Packaging Tools**
+   - PyInstaller is used to create standalone executables
+   - Creates self-contained packages for Linux and Windows
+   - Includes all necessary dependencies and resources
+   - Command: `pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py`
+
 ## Technical Constraints
 
 ### Performance Considerations

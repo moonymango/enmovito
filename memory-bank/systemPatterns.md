@@ -131,6 +131,7 @@ PyQt5 was chosen for its:
 - Integration with Python
 - Support for complex layouts
 - Ability to embed web content (for Plotly visualizations)
+- Theming capabilities through QSS (Qt Style Sheets)
 
 ### Visualization Library: Plotly
 
@@ -202,8 +203,17 @@ The subplot configuration is designed to:
    - If it's a new category, parameters are filtered to show only that category
    - If it's the same category again, all parameters are shown
 3. User can click "Select All Visible" to quickly select all filtered parameters
-4. When plot is generated, selected parameters are used to create visualization
-5. Parameters are automatically deselected after plot generation
+4. User can click "Clear Selection" to deselect all parameters at once
+5. When plot is generated, selected parameters are used to create visualization
+6. Parameters are automatically deselected after plot generation
+
+### Theming Path
+
+1. User selects theme (Dark or Light) using radio buttons
+2. Application loads the appropriate QSS file from the themes directory
+3. QSS is applied to the application using setStyleSheet
+4. QPalette is updated with appropriate colors for the selected theme
+5. Plotly visualizations are configured with matching colors for consistency
 
 ### Plot Management Path
 
@@ -239,5 +249,12 @@ The system is designed with several extension points:
 5. **User Interface Enhancements**
    - Parameter search functionality can be added
    - Custom plot templates can be implemented
+   - Additional theme options beyond dark and light
    - User preferences for default settings can be added
    - Session management for saving and loading visualization states
+   - Keyboard shortcuts for common actions like parameter selection and clearing
+
+6. **Application Packaging**
+   - PyInstaller configuration for different platforms
+   - Customized installers with platform-specific features
+   - Auto-update functionality for new versions

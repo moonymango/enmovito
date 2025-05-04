@@ -5,12 +5,14 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from PyQt5.QtCore import Qt, QUrl, QEvent
-from PyQt5.QtGui import QFont, QWheelEvent
+from PyQt5.QtGui import QFont, QWheelEvent, QPalette, QColor
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QListWidget, QLabel, QFileDialog, QTabWidget, QSplitter,
-    QListWidgetItem, QGroupBox, QGridLayout, QSizePolicy
+    QListWidgetItem, QGroupBox, QGridLayout, QSizePolicy, QRadioButton, QButtonGroup
 )
+from PyQt5.QtCore import QEvent, Qt
+from PyQt5.QtGui import QMouseEvent
 # Import QtWebEngineWidgets early
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEnginePage
 import plotly.io as pio
@@ -20,6 +22,50 @@ QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
 # Set plotly renderer for PyQt
 pio.renderers.default = "browser"
+
+# Set plotly dark theme as default
+pio.templates.default = "plotly_dark"
+
+
+# Custom QListWidget with shift-click selection
+class ShiftSelectListWidget(QListWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.last_selected_item = None
+        self.setSelectionMode(QListWidget.MultiSelection)
+        
+    def mousePressEvent(self, event):
+        """Override mouse press event to handle shift-click selection."""
+        if event.modifiers() & Qt.ShiftModifier:
+            # Get the item at the clicked position
+            item = self.itemAt(event.pos())
+            if item and self.last_selected_item:
+                # Get the indices of the current and last selected items
+                current_index = self.row(item)
+                last_index = self.row(self.last_selected_item)
+                
+                # Determine the range to select
+                start_index = min(current_index, last_index)
+                end_index = max(current_index, last_index)
+                
+                # Select all items in the range
+                for i in range(start_index, end_index + 1):
+                    item_to_select = self.item(i)
+                    if not item_to_select.isHidden():
+                        item_to_select.setSelected(True)
+                
+                # Update the last selected item
+                self.last_selected_item = item
+                return
+            
+        # Call the parent class implementation for normal click behavior
+        super().mousePressEvent(event)
+        
+        # Update the last selected item
+        if event.button() == Qt.LeftButton:
+            item = self.itemAt(event.pos())
+            if item:
+                self.last_selected_item = item
 
 
 # Custom QWebEngineView with wheel event handling
@@ -51,11 +97,15 @@ class EngineDataVisualizer(QMainWindow):
         self.setWindowTitle("Engine Data Log Visualizer")
         self.setGeometry(100, 100, 1200, 800)
         
+        # Apply dark theme
+        self.apply_dark_theme()
+        
         # Data storage
         self.df = None
         self.log_file_path = None
         self.numeric_columns = []
         self.time_column = "Lcl Time"  # Default time column
+        self.use_celsius = False  # Default to Fahrenheit
         
         # Create the main widget and layout
         self.central_widget = QWidget()
@@ -88,6 +138,73 @@ class EngineDataVisualizer(QMainWindow):
         # Set the default directory to example_logs
         self.default_dir = os.path.join(os.getcwd(), "example_logs")
 
+    def apply_theme(self, theme_name="dark"):
+        """Apply a theme to the application using QSS from an external file.
+        
+        Args:
+            theme_name (str): The name of the theme to apply. Default is "dark".
+                              Available themes: "dark", "light"
+        """
+        # Define the path to the theme file
+        theme_file = f"themes/{theme_name}_theme.qss"
+        
+        try:
+            # Read the stylesheet from the file
+            with open(theme_file, "r") as f:
+                stylesheet = f.read()
+            
+            # Apply the stylesheet
+            self.setStyleSheet(stylesheet)
+            print(f"Applied {theme_name} theme from {theme_file}")
+        except Exception as e:
+            print(f"Error loading theme file {theme_file}: {str(e)}")
+            # Fallback to default style
+            self.setStyleSheet("")
+    
+    def apply_dark_theme(self):
+        """Apply dark theme to the application using QSS."""
+        self.apply_theme("dark")
+        
+        # Set dark palette for application
+        dark_palette = QPalette()
+        dark_palette.setColor(QPalette.Window, QColor(30, 30, 30))
+        dark_palette.setColor(QPalette.WindowText, QColor(224, 224, 224))
+        dark_palette.setColor(QPalette.Base, QColor(37, 37, 38))
+        dark_palette.setColor(QPalette.AlternateBase, QColor(45, 45, 48))
+        dark_palette.setColor(QPalette.ToolTipBase, QColor(30, 30, 30))
+        dark_palette.setColor(QPalette.ToolTipText, QColor(224, 224, 224))
+        dark_palette.setColor(QPalette.Text, QColor(224, 224, 224))
+        dark_palette.setColor(QPalette.Button, QColor(45, 45, 48))
+        dark_palette.setColor(QPalette.ButtonText, QColor(224, 224, 224))
+        dark_palette.setColor(QPalette.BrightText, Qt.red)
+        dark_palette.setColor(QPalette.Link, QColor(68, 68, 68))
+        dark_palette.setColor(QPalette.Highlight, QColor(68, 68, 68))
+        dark_palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+        
+        QApplication.setPalette(dark_palette)
+    
+    def apply_light_theme(self):
+        """Apply light theme to the application using QSS."""
+        self.apply_theme("light")
+        
+        # Set light palette for application
+        light_palette = QPalette()
+        light_palette.setColor(QPalette.Window, QColor(245, 245, 245))
+        light_palette.setColor(QPalette.WindowText, QColor(51, 51, 51))
+        light_palette.setColor(QPalette.Base, QColor(255, 255, 255))
+        light_palette.setColor(QPalette.AlternateBase, QColor(240, 240, 240))
+        light_palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
+        light_palette.setColor(QPalette.ToolTipText, QColor(51, 51, 51))
+        light_palette.setColor(QPalette.Text, QColor(51, 51, 51))
+        light_palette.setColor(QPalette.Button, QColor(240, 240, 240))
+        light_palette.setColor(QPalette.ButtonText, QColor(51, 51, 51))
+        light_palette.setColor(QPalette.BrightText, Qt.red)
+        light_palette.setColor(QPalette.Link, QColor(0, 120, 215))
+        light_palette.setColor(QPalette.Highlight, QColor(0, 120, 215))
+        light_palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+        
+        QApplication.setPalette(light_palette)
+    
     def setup_control_panel(self):
         # File selection section
         file_group = QGroupBox("File Selection")
@@ -126,10 +243,16 @@ class EngineDataVisualizer(QMainWindow):
         self.select_all_visible_btn.setEnabled(False)  # Initially disabled until file is loaded
         param_list_header.addWidget(self.select_all_visible_btn)
         
+        # Add "Clear Selection" button
+        self.clear_selection_btn = QPushButton("Clear Selection")
+        self.clear_selection_btn.clicked.connect(self.clear_parameter_selection)
+        self.clear_selection_btn.setEnabled(False)  # Initially disabled until file is loaded
+        param_list_header.addWidget(self.clear_selection_btn)
+        
         param_layout.addLayout(param_list_header)
         
-        self.param_list = QListWidget()
-        self.param_list.setSelectionMode(QListWidget.MultiSelection)
+        # Use our custom list widget with shift-click selection
+        self.param_list = ShiftSelectListWidget()
         param_layout.addWidget(self.param_list)
         
         # Quick parameter category selection
@@ -173,9 +296,100 @@ class EngineDataVisualizer(QMainWindow):
         param_group.setLayout(param_layout)
         self.control_layout.addWidget(param_group)
         
+        # Add theme selection section
+        self.setup_theme_selection()
+        
         # Add stretch to push everything to the top
         self.control_layout.addStretch()
 
+    def setup_theme_selection(self):
+        """Setup theme selection radio buttons."""
+        # Create a group box for theme selection
+        theme_group = QGroupBox("Theme Selection")
+        theme_layout = QHBoxLayout()
+        
+        # Create radio buttons for theme selection
+        self.theme_button_group = QButtonGroup(self)
+        
+        # Dark theme radio button
+        self.dark_theme_radio = QRadioButton("Dark")
+        self.dark_theme_radio.setChecked(True)  # Default to dark theme
+        self.dark_theme_radio.clicked.connect(self.apply_dark_theme)
+        self.theme_button_group.addButton(self.dark_theme_radio)
+        theme_layout.addWidget(self.dark_theme_radio)
+        
+        # Light theme radio button
+        self.light_theme_radio = QRadioButton("Light")
+        self.light_theme_radio.clicked.connect(self.apply_light_theme)
+        self.theme_button_group.addButton(self.light_theme_radio)
+        theme_layout.addWidget(self.light_theme_radio)
+        
+        theme_group.setLayout(theme_layout)
+        self.control_layout.addWidget(theme_group)
+        
+        # Create a group box for temperature unit selection
+        temp_unit_group = QGroupBox("Temperature Unit")
+        temp_unit_layout = QHBoxLayout()
+        
+        # Create radio buttons for temperature unit selection
+        self.temp_unit_button_group = QButtonGroup(self)
+        
+        # Fahrenheit radio button
+        self.fahrenheit_radio = QRadioButton("Fahrenheit (°F)")
+        self.fahrenheit_radio.setChecked(True)  # Default to Fahrenheit
+        self.fahrenheit_radio.clicked.connect(self.set_fahrenheit)
+        self.temp_unit_button_group.addButton(self.fahrenheit_radio)
+        temp_unit_layout.addWidget(self.fahrenheit_radio)
+        
+        # Celsius radio button
+        self.celsius_radio = QRadioButton("Celsius (°C)")
+        self.celsius_radio.clicked.connect(self.set_celsius)
+        self.temp_unit_button_group.addButton(self.celsius_radio)
+        temp_unit_layout.addWidget(self.celsius_radio)
+        
+        temp_unit_group.setLayout(temp_unit_layout)
+        self.control_layout.addWidget(temp_unit_group)
+    
+    def set_fahrenheit(self):
+        """Set temperature unit to Fahrenheit."""
+        self.use_celsius = False
+        # Regenerate any existing plots with the new unit
+        self.regenerate_plots_with_new_unit()
+    
+    def set_celsius(self):
+        """Set temperature unit to Celsius."""
+        self.use_celsius = True
+        # Regenerate any existing plots with the new unit
+        self.regenerate_plots_with_new_unit()
+    
+    def regenerate_plots_with_new_unit(self):
+        """Regenerate all existing plots with the new temperature unit."""
+        # Clear existing plots
+        self.clear_time_series_plot()
+        self.clear_xy_plot()
+        
+        # Show a message to the user
+        self.plot_placeholder.setText(
+            f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
+            "Please generate new plots."
+        )
+        self.xy_plot_placeholder.setText(
+            f"Temperature unit changed to {self.get_temp_unit_name()}.\n"
+            "Please generate new XY plots."
+        )
+        
+        # Make placeholders visible
+        self.plot_placeholder.setVisible(True)
+        self.xy_plot_placeholder.setVisible(True)
+    
+    def get_temp_unit_name(self):
+        """Get the name of the current temperature unit."""
+        return "Celsius (°C)" if self.use_celsius else "Fahrenheit (°F)"
+    
+    def fahrenheit_to_celsius(self, f_value):
+        """Convert Fahrenheit to Celsius."""
+        return (f_value - 32) * 5/9
+    
     def setup_viz_panel(self):
         # Create tabs for different visualization types
         self.viz_tabs = QTabWidget()
@@ -354,10 +568,11 @@ class EngineDataVisualizer(QMainWindow):
             self.x_axis_combo.addItems(numeric_display_columns)
             self.y_axis_combo.addItems(numeric_display_columns)
             
-            # Enable plot buttons and select all button
+            # Enable plot buttons and selection buttons
             self.plot_button.setEnabled(True)
             self.xy_plot_button.setEnabled(True)
             self.select_all_visible_btn.setEnabled(True)
+            self.clear_selection_btn.setEnabled(True)
             
             # Show a message
             self.plot_placeholder.setText(
@@ -470,10 +685,21 @@ class EngineDataVisualizer(QMainWindow):
         # Add traces to the appropriate subplot based on unit
         for i, unit in enumerate(unit_groups):
             for param, display_name in param_units[unit]:
+                # Check if this is a temperature parameter and if we need to convert to Celsius
+                y_values = self.df[param].copy()
+                unit_label = unit
+                
+                # Convert temperature values if needed
+                if self.use_celsius and "deg F" in unit:
+                    y_values = y_values.apply(self.fahrenheit_to_celsius)
+                    unit_label = unit.replace("deg F", "deg C")
+                    # Update subplot title
+                    fig.layout.annotations[i].text = f"Unit: {unit_label}"
+                
                 fig.add_trace(
                     go.Scatter(
                         x=self.df[time_column], 
-                        y=self.df[param], 
+                        y=y_values, 
                         name=display_name
                     ),
                     row=i+1, col=1
@@ -494,9 +720,31 @@ class EngineDataVisualizer(QMainWindow):
             # Add cursor (spike) settings for all axes
             spikedistance=1000,  # Distance to show spikes regardless of data points
             hoverlabel=dict(
-                bgcolor="white",
+                bgcolor="#2D2D30",
                 font_size=12,
-                font_family="Arial"
+                font_family="Arial",
+                font_color="#E0E0E0"
+            ),
+            paper_bgcolor="#1E1E1E",  # Background color of the plot
+            plot_bgcolor="#252526",    # Background color of the plotting area
+            # Remove the bright frame around the plot area
+            xaxis=dict(
+                showline=False, 
+                linewidth=0, 
+                linecolor="#252526", 
+                mirror=False,
+                showgrid=True,
+                gridcolor="#333333",
+                zeroline=False
+            ),
+            yaxis=dict(
+                showline=False, 
+                linewidth=0, 
+                linecolor="#252526", 
+                mirror=False,
+                showgrid=True,
+                gridcolor="#333333",
+                zeroline=False
             ),
         )
         
@@ -546,11 +794,57 @@ class EngineDataVisualizer(QMainWindow):
             'displayModeBar': True,
             'modeBarButtonsToAdd': ['scrollZoom'],
             'displaylogo': False,  # Hide Plotly logo
+            'toImageButtonOptions': {
+                'format': 'png',
+                'filename': 'plot',
+                'height': 800,
+                'width': 1200,
+                'scale': 1
+            },
+            'responsive': True,
+            'frameMargins': 0,  # Remove frame margins
         }
+        
+        # Add custom CSS to the figure's layout
+        fig.layout.template.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
+        fig.layout.template.layout.paper_bgcolor = "#1E1E1E"
+        fig.layout.template.layout.plot_bgcolor = "#252526"
+        fig.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
         
         # Create a temporary HTML file and display it
         temp_file = os.path.join(os.getcwd(), "temp-plot.html")
         plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
+        
+        # Add custom CSS to remove the frame around the entire plot
+        with open(plot_path, 'r') as file:
+            html_content = file.read()
+        
+        # Insert custom CSS to remove the frame and set body background
+        custom_css = """
+        <style>
+        body {
+            background-color: #1E1E1E !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .plotly, .plot-container, .svg-container {
+            border: none !important;
+            box-shadow: none !important;
+            background: #1E1E1E !important;
+        }
+        .js-plotly-plot, .plotly, .plotly div {
+            background-color: #1E1E1E !important;
+        }
+        </style>
+        """
+        
+        # Insert the custom CSS right before the </head> tag
+        html_content = html_content.replace('</head>', f'{custom_css}</head>')
+        
+        # Write the modified HTML back to the file
+        with open(plot_path, 'w') as file:
+            file.write(html_content)
+            
         print(f"Plot saved to: {plot_path}")
         
         # If this is the first plot, hide the placeholder
@@ -601,10 +895,28 @@ class EngineDataVisualizer(QMainWindow):
         # Create the XY plot
         fig = go.Figure()
         
+        # Get the units for x and y parameters
+        x_unit = self.extract_unit(x_display)
+        y_unit = self.extract_unit(y_display)
+        
+        # Check if we need to convert temperature values
+        x_values = self.df[x_param].copy()
+        y_values = self.df[y_param].copy()
+        
+        # Convert x-axis values if needed
+        if self.use_celsius and "deg F" in x_unit:
+            x_values = x_values.apply(self.fahrenheit_to_celsius)
+            x_display = x_display.replace("deg F", "deg C")
+        
+        # Convert y-axis values if needed
+        if self.use_celsius and "deg F" in y_unit:
+            y_values = y_values.apply(self.fahrenheit_to_celsius)
+            y_display = y_display.replace("deg F", "deg C")
+        
         fig.add_trace(
             go.Scatter(
-                x=self.df[x_param], 
-                y=self.df[y_param], 
+                x=x_values, 
+                y=y_values, 
                 mode='markers', 
                 name=f'{y_param} vs {x_param}'
             )
@@ -622,7 +934,34 @@ class EngineDataVisualizer(QMainWindow):
             dragmode='zoom',  # Default drag mode is zoom
             # Enable hover mode with closest point
             hovermode='closest',  # Show hover info for closest point
-            hoverdistance=100,  # Increase hover distance for better usability
+            hoverdistance=100,  # Increase hover distance for better usability,
+            hoverlabel=dict(
+                bgcolor="#2D2D30",
+                font_size=12,
+                font_family="Arial",
+                font_color="#E0E0E0"
+            ),
+            paper_bgcolor="#1E1E1E",  # Background color of the plot
+            plot_bgcolor="#252526",    # Background color of the plotting area
+            # Remove the bright frame around the plot area
+            xaxis=dict(
+                showline=False, 
+                linewidth=0, 
+                linecolor="#252526", 
+                mirror=False,
+                showgrid=True,
+                gridcolor="#333333",
+                zeroline=False
+            ),
+            yaxis=dict(
+                showline=False, 
+                linewidth=0, 
+                linecolor="#252526", 
+                mirror=False,
+                showgrid=True,
+                gridcolor="#333333",
+                zeroline=False
+            ),
         )
         
         # Set config to enable scrollZoom and hover features
@@ -631,11 +970,57 @@ class EngineDataVisualizer(QMainWindow):
             'displayModeBar': True,
             'modeBarButtonsToAdd': ['scrollZoom'],
             'displaylogo': False,  # Hide Plotly logo
+            'toImageButtonOptions': {
+                'format': 'png',
+                'filename': 'plot',
+                'height': 800,
+                'width': 1200,
+                'scale': 1
+            },
+            'responsive': True,
+            'frameMargins': 0,  # Remove frame margins
         }
+        
+        # Add custom CSS to the figure's layout
+        fig.layout.template.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
+        fig.layout.template.layout.paper_bgcolor = "#1E1E1E"
+        fig.layout.template.layout.plot_bgcolor = "#252526"
+        fig.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
         
         # Create a temporary HTML file and display it
         temp_file = os.path.join(os.getcwd(), "temp-plot.html")
         plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
+        
+        # Add custom CSS to remove the frame around the entire plot
+        with open(plot_path, 'r') as file:
+            html_content = file.read()
+        
+        # Insert custom CSS to remove the frame and set body background
+        custom_css = """
+        <style>
+        body {
+            background-color: #1E1E1E !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .plotly, .plot-container, .svg-container {
+            border: none !important;
+            box-shadow: none !important;
+            background: #1E1E1E !important;
+        }
+        .js-plotly-plot, .plotly, .plotly div {
+            background-color: #1E1E1E !important;
+        }
+        </style>
+        """
+        
+        # Insert the custom CSS right before the </head> tag
+        html_content = html_content.replace('</head>', f'{custom_css}</head>')
+        
+        # Write the modified HTML back to the file
+        with open(plot_path, 'w') as file:
+            file.write(html_content)
+            
         print(f"Plot saved to: {plot_path}")
         
         # If this is the first plot, hide the placeholder
@@ -711,9 +1096,6 @@ class EngineDataVisualizer(QMainWindow):
         
         # Show the placeholder again
         self.plot_placeholder.setVisible(True)
-        
-        # Disable the clear button
-        self.clear_ts_button.setEnabled(False)
     
     def clear_xy_plot(self):
         """Clear all XY plots and restore the placeholder."""
@@ -726,9 +1108,6 @@ class EngineDataVisualizer(QMainWindow):
         
         # Show the placeholder again
         self.xy_plot_placeholder.setVisible(True)
-        
-        # Disable the clear button
-        self.clear_xy_button.setEnabled(False)
     
     def select_all_visible_parameters(self):
         """Select all parameters that are currently visible in the list."""
@@ -754,10 +1133,14 @@ class EngineDataVisualizer(QMainWindow):
         
         # Clear the current filter
         self.current_filter = None
+    
+    def clear_parameter_selection(self):
+        """Clear all selected parameters in the list."""
+        self.param_list.clearSelection()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = EngineDataVisualizer()
-    window.show()
+    window.showMaximized()  # Start in maximized (full screen) mode
     sys.exit(app.exec_())

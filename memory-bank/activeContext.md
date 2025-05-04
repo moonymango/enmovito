@@ -12,9 +12,12 @@ The Enmovito project is now in a fully functional state with core visualization 
 6. Clear individual plots with dedicated clear buttons
 7. Select all visible parameters with a single click
 8. Synchronize x-axis zooming while maintaining independent y-axis scales
+9. Support dark theme for improved visual comfort
+10. Clear all selected parameters with a single click
 
 The current focus is on:
 
+- Packaging the application into self-contained executables for Linux and Windows
 - Ensuring robust handling of different CSV file formats
 - Improving visualization performance with large datasets
 - Adding more advanced analysis capabilities

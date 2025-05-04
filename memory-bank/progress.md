@@ -2,11 +2,11 @@
 
 ## Current Status
 
-Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities.
+Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities. Recent additions include dark theme support and a "Clear Selection" button for improved usability.
 
 ### Development Status: Beta
 
-The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes and UI enhancements have significantly improved stability and usability.
+The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes and UI enhancements have significantly improved stability and usability. Work is currently underway to package the application into self-contained executables for Linux and Windows.
 
 ## What Works
 
@@ -23,6 +23,8 @@ The application is stable for its core functionality but still has areas for imp
 - Parameter selection list with multi-select capability
 - Category-based parameter filtering
 - "Select All Visible" button for quick selection of filtered parameters
+- "Clear Selection" button to deselect all parameters at once
+- Dark theme support for improved visual comfort
 - Tab-based visualization switching
 - Individual clear buttons for each plot
 - Automatic parameter deselection after plot generation
@@ -218,22 +220,30 @@ Based on experience and user feedback, the project is evolving toward:
 
 5. **UI Enhancements** - *Completed*
    - Added "Select All Visible" button for quick parameter selection
+   - Added "Clear Selection" button to deselect all parameters at once
+   - Implemented dark theme support for improved visual comfort
    - Removed global "Clear Plot" buttons in favor of individual plot management
    - Implemented synchronized x-axis zooming with independent y-axis scales
+   - Improved plot appearance by removing bright frames around plots
 
 ### Upcoming Milestones
 
-1. **Performance Optimization** - *In Progress*
+1. **Application Packaging** - *In Progress*
+   - Create self-contained executable for Linux
+   - Create self-contained executable for Windows
+   - Include all necessary dependencies and resources
+
+2. **Performance Optimization** - *In Progress*
    - Data decimation implementation
    - Memory usage optimization
    - Rendering performance improvements
 
-2. **Enhanced Analysis** - *Planned*
+3. **Enhanced Analysis** - *Planned*
    - Statistical analysis features
    - Data filtering capabilities
    - Advanced visualization options
 
-3. **User Experience Refinement** - *Planned*
+4. **User Experience Refinement** - *Planned*
    - Parameter search functionality
    - Improved visual design for filtered parameters
    - Customization options

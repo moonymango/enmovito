@@ -1,0 +1,151 @@
+QWidget {
+    background-color: #F5F5F5;
+    color: #333333;
+    font-size: 10pt;
+}
+
+QMainWindow {
+    background-color: #FFFFFF;
+}
+
+QSplitter {
+    background-color: #FFFFFF;
+}
+
+QSplitter::handle {
+    background-color: #DDDDDD;
+}
+
+QGroupBox {
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+    margin-top: 1ex;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 0 3px;
+}
+
+QPushButton {
+    background-color: #E0E0E0;
+    color: #333333;
+    border: none;
+    border-radius: 3px;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #D0D0D0;
+}
+
+QPushButton:pressed {
+    background-color: #C0C0C0;
+}
+
+QPushButton:disabled {
+    background-color: #F0F0F0;
+    color: #AAAAAA;
+}
+
+QListWidget, QComboBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    border-radius: 3px;
+}
+
+QListWidget::item {
+    padding: 3px;
+}
+
+QListWidget::item:selected {
+    background-color: #0078D7;
+    color: white;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+    background-color: #D0D0D0;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #333333;
+    margin-top: 3px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    selection-background-color: #0078D7;
+    selection-color: white;
+}
+
+QLabel {
+    color: #333333;
+}
+
+QTabWidget::pane {
+    border: 1px solid #CCCCCC;
+}
+
+QTabBar::tab {
+    background-color: #F0F0F0;
+    color: #333333;
+    border: 1px solid #CCCCCC;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 10px;
+}
+
+QTabBar::tab:selected {
+    background-color: #FFFFFF;
+    border-bottom: none;
+}
+
+QTabBar::tab:!selected {
+    margin-top: 2px;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background-color: #F5F5F5;
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #CCCCCC;
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background-color: #F5F5F5;
+    height: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #CCCCCC;
+    min-width: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
