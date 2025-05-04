@@ -10,6 +10,8 @@ The Enmovito project is now in a fully functional state with core visualization 
 4. Organize parameters into categories for easier selection
 5. Filter parameters by category for improved usability
 6. Clear individual plots with dedicated clear buttons
+7. Select all visible parameters with a single click
+8. Synchronize x-axis zooming while maintaining independent y-axis scales
 
 The current focus is on:
 
@@ -19,6 +21,19 @@ The current focus is on:
 - Enhancing the user experience with additional UI improvements
 
 ## Recent Changes
+
+### UI Improvements
+
+- Added a "Select All Visible" button to quickly select all parameters currently visible in the list
+  - Particularly useful when a category filter is applied
+  - Makes it easy to select all parameters in a specific category with just two clicks
+- Removed the global "Clear Plot" buttons that clear all plots at once
+  - Kept the individual clear buttons for each plot
+  - This provides more granular control over which plots to keep or remove
+- Improved subplot visualization with independent y-axis scales
+  - Modified the subplot linking code to only link x-axes between subplots
+  - Each subplot now maintains its own y-axis scale when using the autoscale button
+  - This allows proper visualization of parameters with vastly different value ranges
 
 ### Bug Fixes and Improvements
 
@@ -50,6 +65,7 @@ The current focus is on:
 - Implemented time series plotting with multiple parameters
 - Added XY plot functionality for parameter correlation analysis
 - Embedded Plotly visualizations in PyQt using QWebEngineView
+- Implemented synchronized x-axis zooming with independent y-axis scales
 
 ### Data Handling
 
@@ -73,7 +89,6 @@ The current focus is on:
 2. **UI Enhancements**
    - Add parameter search functionality
    - Implement parameter favorites or recent selections
-   - Add a "Show All" button to reset category filters
    - Improve visual feedback for filtered parameters
 
 3. **Analysis Features**
@@ -107,6 +122,8 @@ The current focus is on:
 - **Category-based Parameter Filtering**: Parameters are grouped by function for easier selection, with filtering capability
 - **Individual Clear Buttons**: Each plot has its own clear button for more granular control
 - **Parameter Deselection**: Parameters are automatically deselected after generating a plot for better workflow
+- **Select All Visible Button**: Allows quick selection of all visible parameters, especially useful with category filtering
+- **Independent Y-axis Scaling**: Each subplot maintains its own y-axis scale while sharing x-axis zoom level
 
 ### Technical Decisions
 
@@ -114,6 +131,7 @@ The current focus is on:
 - **Data Structure**: Using pandas DataFrame as the central data structure for flexibility and performance
 - **Visualization Embedding**: Using QWebEngineView to embed Plotly visualizations within PyQt
 - **Complex Header Handling**: Special parsing for the three-line header structure in CSV files
+- **Subplot Linking**: Using Plotly's 'matches' property to link only x-axes between subplots
 
 ### Open Questions
 
@@ -130,7 +148,7 @@ The current focus is on:
 - Main application logic in `engine_data_visualizer.py`
 - Example usage patterns in `example_usage.py`
 - Clear separation between UI setup, data handling, and visualization logic
-- Modular methods for specific functionality (e.g., `show_all_parameters`, `clear_specific_ts_plot`)
+- Modular methods for specific functionality (e.g., `show_all_parameters`, `clear_specific_ts_plot`, `select_all_visible_parameters`)
 
 ### Visualization Style
 
@@ -138,12 +156,14 @@ The current focus is on:
 - Clear labeling of axes and parameters
 - Consistent color schemes for parameter types
 - Shared x-axis for time series plots for easy comparison
+- Independent y-axis scales for optimal visualization of different value ranges
 - Individual clear buttons for each plot with descriptive labels
 
 ### User Interaction Patterns
 
 - File selection → Parameter selection → Visualization generation
 - Category buttons for filtering parameters by type
+- "Select All Visible" button for quick selection of filtered parameters
 - Tab-based navigation between visualization types
 - Direct interaction with plots for exploration
 - Individual plot clearing for focused analysis
@@ -157,6 +177,8 @@ The current focus is on:
 - Good organization of parameters into functional categories with filtering
 - Interactive plots that allow detailed data exploration
 - Individual plot management for focused analysis
+- Synchronized x-axis zooming with independent y-axis scales
+- Quick parameter selection with "Select All Visible" button
 
 ### Areas for Improvement
 
@@ -173,3 +195,5 @@ The current focus is on:
 - Interactive visualization is essential for effective data exploration
 - CSV parsing needs to be robust to handle complex header structures
 - Individual plot management improves the user experience for comparative analysis
+- Synchronized x-axis zooming with independent y-axis scales is crucial for comparing parameters with different value ranges
+- Quick selection tools like "Select All Visible" significantly improve workflow efficiency

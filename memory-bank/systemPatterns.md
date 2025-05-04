@@ -30,11 +30,13 @@ Enmovito follows a straightforward desktop application architecture with clear s
    - Parameter categorization and management
    - Visualization logic and configuration
    - Data analysis functions
+   - Subplot synchronization management
 
 3. **Presentation Layer**
    - PyQt5-based GUI components
    - Plotly visualization integration
    - User interaction handling
+   - Parameter selection and filtering UI
 
 ## Design Patterns
 
@@ -53,6 +55,7 @@ The GUI is structured using a composite pattern through PyQt's widget hierarchy:
 - Main window contains splitter
 - Splitter contains control panel and visualization panel
 - Each panel contains various widgets (buttons, lists, tabs)
+- Plot containers include both the plot and its control buttons
 
 ### Observer Pattern
 
@@ -60,6 +63,7 @@ The application implements an implicit observer pattern through PyQt's signals a
 
 - UI elements emit signals when user interactions occur
 - Slots (methods) are connected to these signals to respond to user actions
+- Parameter list selection changes trigger UI updates
 
 ### Factory Method
 
@@ -67,6 +71,14 @@ While not explicitly implemented as a separate class, the application uses facto
 
 - `generate_plot()` creates time series visualizations
 - `generate_xy_plot()` creates XY scatter plot visualizations
+
+### Command Pattern
+
+The application implements a simplified command pattern for plot management:
+
+- Each plot has its own clear button with a specific command
+- The command is connected to a method that removes only that specific plot
+- This allows for granular control over individual plots
 
 ## Component Relationships
 
@@ -94,6 +106,21 @@ While not explicitly implemented as a separate class, the application uses facto
                                         └─────────────┘
 ```
 
+### Parameter Selection Flow
+
+```
+┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
+│  Category    │────▶│  Filter       │────▶│ Select All      │
+│  Selection   │     │  Parameters   │     │ Visible Button  │
+└──────────────┘     └───────────────┘     └─────────────────┘
+                                                   │
+                                                   ▼
+┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
+│  Generate    │◀────│  Parameter    │◀────│ Select All      │
+│  Plot        │     │  Selection    │     │ Visible Action  │
+└──────────────┘     └───────────────┘     └─────────────────┘
+```
+
 ## Key Technical Decisions
 
 ### GUI Framework: PyQt5
@@ -113,6 +140,7 @@ Plotly was selected over alternatives like Matplotlib or PyQtGraph because it of
 - Good performance with time series data
 - Easy integration with PyQt through HTML embedding
 - Support for both time series and XY plots
+- Advanced subplot configuration options
 
 ### Data Processing: Pandas
 
@@ -129,6 +157,14 @@ Proper integration of QtWebEngineWidgets is critical:
 - Must be imported early in the file
 - Qt.AA_ShareOpenGLContexts attribute must be set before creating QApplication
 - QUrl must be imported from PyQt5.QtCore for file loading
+
+### Subplot Configuration
+
+The subplot configuration is designed to:
+- Share x-axes between subplots for synchronized zooming
+- Maintain independent y-axes for optimal visualization of different value ranges
+- Group parameters by unit type for logical organization
+- Use Plotly's 'matches' property to link only x-axes between subplots
 
 ## Critical Implementation Paths
 
@@ -148,11 +184,16 @@ Proper integration of QtWebEngineWidgets is critical:
 ### Visualization Path
 
 1. User selects parameters (possibly after filtering by category)
-2. Application retrieves selected data from DataFrame using the actual column names
-3. Plotly figure is created with appropriate configuration
-4. Figure is rendered to HTML at a specific file path
-5. HTML is displayed in PyQt WebEngineView
-6. Individual clear button is created for the plot
+2. User can click "Select All Visible" to select all currently visible parameters
+3. Application retrieves selected data from DataFrame using the actual column names
+4. Parameters are grouped by unit type
+5. Plotly figure is created with appropriate configuration
+   - Subplots are created for each unit group
+   - X-axes are linked for synchronized zooming
+   - Y-axes remain independent for optimal scaling
+6. Figure is rendered to HTML at a specific file path
+7. HTML is displayed in PyQt WebEngineView
+8. Individual clear button is created for the plot
 
 ### Parameter Selection Path
 
@@ -160,8 +201,16 @@ Proper integration of QtWebEngineWidgets is critical:
 2. When a category button is clicked:
    - If it's a new category, parameters are filtered to show only that category
    - If it's the same category again, all parameters are shown
-3. When plot is generated, selected parameters are used to create visualization
-4. Parameters are automatically deselected after plot generation
+3. User can click "Select All Visible" to quickly select all filtered parameters
+4. When plot is generated, selected parameters are used to create visualization
+5. Parameters are automatically deselected after plot generation
+
+### Plot Management Path
+
+1. Each plot is created with its own container and clear button
+2. Clear button is connected to a specific method for that plot
+3. When clear button is clicked, only that specific plot is removed
+4. If all plots are removed, the placeholder is shown again
 
 ## Extension Points
 
@@ -175,11 +224,20 @@ The system is designed with several extension points:
 2. **Parameter Categories**
    - The category dictionary can be extended with new parameter groupings
    - The filtering mechanism can be enhanced with search functionality
+   - The "Select All Visible" functionality can be extended with additional selection options
 
 3. **Data Analysis Functions**
    - Additional analysis methods can be added to process and visualize data
    - Statistical analysis can be integrated into the visualization
+   - Trend line and curve fitting can be added to XY plots
 
 4. **Data Sources**
    - The data loading mechanism can be extended to support different file formats
    - The header parsing logic can be adapted for different CSV structures
+   - Real-time data visualization could be implemented in the future
+
+5. **User Interface Enhancements**
+   - Parameter search functionality can be added
+   - Custom plot templates can be implemented
+   - User preferences for default settings can be added
+   - Session management for saving and loading visualization states

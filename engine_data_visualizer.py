@@ -4,15 +4,15 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QUrl, QEvent
+from PyQt5.QtGui import QFont, QWheelEvent
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QListWidget, QLabel, QFileDialog, QTabWidget, QSplitter,
-    QListWidgetItem, QGroupBox, QGridLayout
+    QListWidgetItem, QGroupBox, QGridLayout, QSizePolicy
 )
 # Import QtWebEngineWidgets early
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEnginePage
 import plotly.io as pio
 from plotly.offline import plot
 # Set Qt attribute before creating QApplication
@@ -20,6 +20,29 @@ QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
 # Set plotly renderer for PyQt
 pio.renderers.default = "browser"
+
+
+# Custom QWebEngineView with wheel event handling
+class ZoomableWebEngineView(QWebEngineView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setPage(QWebEnginePage(self))
+        
+    def wheelEvent(self, event):
+        # Pass wheel events to the web page for zooming
+        super().wheelEvent(event)
+        
+        # Execute JavaScript to simulate wheel event on the Plotly graph
+        delta = event.angleDelta().y()
+        script = f"""
+        var evt = new WheelEvent('wheel', {{
+            deltaY: {-delta},
+            clientX: {event.position().x()},
+            clientY: {event.position().y()}
+        }});
+        document.getElementsByClassName('plotly')[0].dispatchEvent(evt);
+        """
+        self.page().runJavaScript(script)
 
 
 class EngineDataVisualizer(QMainWindow):
@@ -93,8 +116,18 @@ class EngineDataVisualizer(QMainWindow):
         time_layout.addWidget(self.time_combo)
         param_layout.addLayout(time_layout)
         
-        # Parameter list
-        param_layout.addWidget(QLabel("Select Parameters to Plot:"))
+        # Parameter list with selection controls
+        param_list_header = QHBoxLayout()
+        param_list_header.addWidget(QLabel("Select Parameters to Plot:"))
+        
+        # Add "Select All Visible" button
+        self.select_all_visible_btn = QPushButton("Select All Visible")
+        self.select_all_visible_btn.clicked.connect(self.select_all_visible_parameters)
+        self.select_all_visible_btn.setEnabled(False)  # Initially disabled until file is loaded
+        param_list_header.addWidget(self.select_all_visible_btn)
+        
+        param_layout.addLayout(param_list_header)
+        
         self.param_list = QListWidget()
         self.param_list.setSelectionMode(QListWidget.MultiSelection)
         param_layout.addWidget(self.param_list)
@@ -153,14 +186,8 @@ class EngineDataVisualizer(QMainWindow):
         self.time_series_layout = QVBoxLayout(self.time_series_tab)
         self.viz_tabs.addTab(self.time_series_tab, "Time Series")
         
-        # Add a button layout at the top
-        ts_button_layout = QHBoxLayout()
-        self.clear_ts_button = QPushButton("Clear Plot")
-        self.clear_ts_button.clicked.connect(self.clear_time_series_plot)
-        self.clear_ts_button.setEnabled(False)  # Initially disabled
-        ts_button_layout.addWidget(self.clear_ts_button)
-        ts_button_layout.addStretch()
-        self.time_series_layout.addLayout(ts_button_layout)
+        # Add a spacer at the top for consistent layout
+        self.time_series_layout.addSpacing(10)
         
         # Placeholder for the plot
         self.plot_placeholder = QLabel(
@@ -178,14 +205,8 @@ class EngineDataVisualizer(QMainWindow):
         self.xy_plot_layout = QVBoxLayout(self.xy_plot_tab)
         self.viz_tabs.addTab(self.xy_plot_tab, "XY Plot")
         
-        # Add a button layout at the top
-        xy_button_layout = QHBoxLayout()
-        self.clear_xy_button = QPushButton("Clear Plot")
-        self.clear_xy_button.clicked.connect(self.clear_xy_plot)
-        self.clear_xy_button.setEnabled(False)  # Initially disabled
-        xy_button_layout.addWidget(self.clear_xy_button)
-        xy_button_layout.addStretch()
-        self.xy_plot_layout.addLayout(xy_button_layout)
+        # Add a spacer at the top for consistent layout
+        self.xy_plot_layout.addSpacing(10)
         
         # Store references to browser widgets and their containers
         self.xy_browsers = []
@@ -333,9 +354,10 @@ class EngineDataVisualizer(QMainWindow):
             self.x_axis_combo.addItems(numeric_display_columns)
             self.y_axis_combo.addItems(numeric_display_columns)
             
-            # Enable plot buttons
+            # Enable plot buttons and select all button
             self.plot_button.setEnabled(True)
             self.xy_plot_button.setEnabled(True)
+            self.select_all_visible_btn.setEnabled(True)
             
             # Show a message
             self.plot_placeholder.setText(
@@ -390,6 +412,13 @@ class EngineDataVisualizer(QMainWindow):
             else:
                 btn.setText(cat)
 
+    def extract_unit(self, param_name):
+        """Extract unit from parameter name, e.g., 'Oil Temp (deg F)' -> 'deg F'"""
+        if '(' in param_name and ')' in param_name:
+            unit = param_name.split('(')[1].split(')')[0]
+            return unit
+        return "Unknown"
+    
     def generate_plot(self):
         selected_items = self.param_list.selectedItems()
         # Get the actual column names from item data
@@ -420,33 +449,108 @@ class EngineDataVisualizer(QMainWindow):
         time_display = self.time_combo.currentText()
         time_column = self.full_to_abbr.get(time_display, time_display)
         
-        # Create a subplot for each parameter
+        # Group parameters by units
+        param_units = {}
+        for i, display_name in enumerate(selected_display_names):
+            unit = self.extract_unit(display_name)
+            if unit not in param_units:
+                param_units[unit] = []
+            param_units[unit].append((selected_params[i], display_name))
+        
+        # Create a subplot for each unit group
+        unit_groups = list(param_units.keys())
         fig = make_subplots(
-            rows=len(selected_params), 
+            rows=len(unit_groups), 
             cols=1, 
-            shared_xaxes=True, 
+            shared_xaxes=True,  # Share x-axes between subplots
             vertical_spacing=0.02,
-            subplot_titles=selected_display_names
+            subplot_titles=[f"Unit: {unit}" for unit in unit_groups]
         )
         
-        # Add a trace for each parameter
-        for i, param in enumerate(selected_params):
-            fig.add_trace(
-                go.Scatter(x=self.df[time_column], y=self.df[param], name=param),
-                row=i+1, col=1
+        # Add traces to the appropriate subplot based on unit
+        for i, unit in enumerate(unit_groups):
+            for param, display_name in param_units[unit]:
+                fig.add_trace(
+                    go.Scatter(
+                        x=self.df[time_column], 
+                        y=self.df[param], 
+                        name=display_name
+                    ),
+                    row=i+1, col=1
+                )
+        
+        # Update layout with responsive sizing, mouse wheel zoom, and hover features
+        fig.update_layout(
+            autosize=True,  # Enable autosize for responsive behavior
+            title_text=f"Engine Data Log: {os.path.basename(self.log_file_path)}",
+            showlegend=True,  # Show legend to distinguish multiple traces in the same subplot
+            margin=dict(l=50, r=50, t=100, b=50),  # Add some margin for better appearance
+            # Enable mouse wheel zoom
+            modebar_add=['scrollZoom'],
+            dragmode='zoom',  # Default drag mode is zoom
+            # Enable hover mode with vertical line
+            hovermode='x unified',  # Show a single vertical line at x position
+            hoverdistance=100,  # Increase hover distance for better usability
+            # Add cursor (spike) settings for all axes
+            spikedistance=1000,  # Distance to show spikes regardless of data points
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=12,
+                font_family="Arial"
+            ),
+        )
+        
+        # Add spikes (cursor lines) to all x-axes and y-axes
+        for i in range(1, len(unit_groups) + 1):
+            # Update x-axes with spikes
+            fig.update_xaxes(
+                showspikes=True,  # Show spike line for x-axis
+                spikethickness=2,  # Line width
+                spikedash='solid',  # Line dash style
+                spikecolor='rgba(150, 150, 150, 0.8)',  # Line color
+                spikesnap='cursor',  # Snap to cursor
+                spikemode='across',  # Draw spike line across the plot
+                showline=True,
+                showgrid=True,
+                row=i, col=1  # Specify the subplot
+            )
+            
+            # Update y-axes with spikes
+            fig.update_yaxes(
+                showspikes=True,  # Show spike line for y-axis
+                spikethickness=2,  # Line width
+                spikedash='solid',  # Line dash style
+                spikecolor='rgba(150, 150, 150, 0.8)',  # Line color
+                spikesnap='cursor',  # Snap to cursor
+                spikemode='across',  # Draw spike line across the plot
+                showline=True,
+                showgrid=True,
+                row=i, col=1  # Specify the subplot
             )
         
-        # Update layout
-        fig.update_layout(
-            height=200 * len(selected_params),
-            width=900,
-            title_text=f"Engine Data Log: {os.path.basename(self.log_file_path)}",
-            showlegend=False,
-        )
+        # Configure subplot linking for synchronized x-axis zooming only
+        # This allows independent y-axis scales for each subplot
+        if len(unit_groups) > 1:
+            # Create a list of all subplot references
+            subplot_refs = [f"xy{i+1}" for i in range(len(unit_groups))]
+            
+            # Link only the x-axes between subplots
+            # The first subplot's x-axis will be the reference
+            for i in range(1, len(subplot_refs)):
+                # Link each subplot's x-axis to the first subplot's x-axis
+                fig._layout_obj['xaxis' + subplot_refs[i][-1]]['matches'] = 'x' + subplot_refs[0][-1]
+        
+        # Set config to enable scrollZoom and hover features
+        config = {
+            'scrollZoom': True,
+            'displayModeBar': True,
+            'modeBarButtonsToAdd': ['scrollZoom'],
+            'displaylogo': False,  # Hide Plotly logo
+        }
         
         # Create a temporary HTML file and display it
         temp_file = os.path.join(os.getcwd(), "temp-plot.html")
-        plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False)
+        plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
         print(f"Plot saved to: {plot_path}")
         
         # If this is the first plot, hide the placeholder
@@ -465,10 +569,11 @@ class EngineDataVisualizer(QMainWindow):
         button_layout.addStretch()
         plot_layout.addLayout(button_layout)
         
-        # Create a browser widget to display the plot
-        browser = QWebEngineView()
+        # Create a browser widget to display the plot with size policy for expansion
+        browser = ZoomableWebEngineView()
+        browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         browser.load(QUrl.fromLocalFile(plot_path))
-        plot_layout.addWidget(browser)
+        plot_layout.addWidget(browser, 1)  # Add with stretch factor of 1
         
         # Add the container to the layout
         self.time_series_layout.addWidget(plot_container)
@@ -476,8 +581,7 @@ class EngineDataVisualizer(QMainWindow):
         # Store references to the browser and container
         self.ts_browsers.append((browser, plot_container))
         
-        # Enable the main clear button if there are plots
-        self.clear_ts_button.setEnabled(True)
+        # No need to enable the main clear button as it's been removed
         
         # Clear the parameter selection
         self.param_list.clearSelection()
@@ -506,18 +610,32 @@ class EngineDataVisualizer(QMainWindow):
             )
         )
         
-        # Update layout
+        # Update layout with responsive sizing, mouse wheel zoom, and hover features
         fig.update_layout(
-            height=600,
-            width=900,
+            autosize=True,  # Enable autosize for responsive behavior
             title_text=f"{y_display} vs {x_display}",
             xaxis_title=x_display,
             yaxis_title=y_display,
+            margin=dict(l=50, r=50, t=100, b=50),  # Add some margin for better appearance
+            # Enable mouse wheel zoom
+            modebar_add=['scrollZoom'],
+            dragmode='zoom',  # Default drag mode is zoom
+            # Enable hover mode with closest point
+            hovermode='closest',  # Show hover info for closest point
+            hoverdistance=100,  # Increase hover distance for better usability
         )
+        
+        # Set config to enable scrollZoom and hover features
+        config = {
+            'scrollZoom': True,
+            'displayModeBar': True,
+            'modeBarButtonsToAdd': ['scrollZoom'],
+            'displaylogo': False,  # Hide Plotly logo
+        }
         
         # Create a temporary HTML file and display it
         temp_file = os.path.join(os.getcwd(), "temp-plot.html")
-        plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False)
+        plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
         print(f"Plot saved to: {plot_path}")
         
         # If this is the first plot, hide the placeholder
@@ -536,8 +654,9 @@ class EngineDataVisualizer(QMainWindow):
         button_layout.addStretch()
         plot_layout.addLayout(button_layout)
         
-        # Create a browser widget to display the plot
-        browser = QWebEngineView()
+        # Create a browser widget to display the plot with size policy for expansion
+        browser = ZoomableWebEngineView()
+        browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         browser.load(QUrl.fromLocalFile(plot_path))
         plot_layout.addWidget(browser)
         
@@ -547,8 +666,7 @@ class EngineDataVisualizer(QMainWindow):
         # Store references to the browser and container
         self.xy_browsers.append((browser, plot_container))
         
-        # Enable the main clear button if there are plots
-        self.clear_xy_button.setEnabled(True)
+        # No need to enable the main clear button as it's been removed
         
         # No need to clear parameter selection for XY plot as it uses combo boxes
 
@@ -563,10 +681,9 @@ class EngineDataVisualizer(QMainWindow):
         # Remove the container from the layout
         container.setParent(None)
         
-        # If no more plots, show the placeholder and disable the clear button
+        # If no more plots, show the placeholder
         if not self.ts_browsers:
             self.plot_placeholder.setVisible(True)
-            self.clear_ts_button.setEnabled(False)
     
     def clear_specific_xy_plot(self, container):
         """Clear a specific XY plot."""
@@ -579,10 +696,9 @@ class EngineDataVisualizer(QMainWindow):
         # Remove the container from the layout
         container.setParent(None)
         
-        # If no more plots, show the placeholder and disable the clear button
+        # If no more plots, show the placeholder
         if not self.xy_browsers:
             self.xy_plot_placeholder.setVisible(True)
-            self.clear_xy_button.setEnabled(False)
     
     def clear_time_series_plot(self):
         """Clear all time series plots and restore the placeholder."""
@@ -613,6 +729,17 @@ class EngineDataVisualizer(QMainWindow):
         
         # Disable the clear button
         self.clear_xy_button.setEnabled(False)
+    
+    def select_all_visible_parameters(self):
+        """Select all parameters that are currently visible in the list."""
+        # First, clear current selection
+        self.param_list.clearSelection()
+        
+        # Then select all visible items
+        for i in range(self.param_list.count()):
+            item = self.param_list.item(i)
+            if not item.isHidden():
+                item.setSelected(True)
     
     def show_all_parameters(self):
         """Show all parameters in the list."""

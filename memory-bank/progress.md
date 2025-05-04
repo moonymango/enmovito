@@ -2,11 +2,11 @@
 
 ## Current Status
 
-Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering and plot management.
+Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities.
 
 ### Development Status: Beta
 
-The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes have significantly improved stability and usability.
+The application is stable for its core functionality but still has areas for improvement and feature additions before reaching a production-ready state. Recent bug fixes and UI enhancements have significantly improved stability and usability.
 
 ## What Works
 
@@ -22,13 +22,14 @@ The application is stable for its core functionality but still has areas for imp
 - Split-panel layout with control and visualization areas
 - Parameter selection list with multi-select capability
 - Category-based parameter filtering
+- "Select All Visible" button for quick selection of filtered parameters
 - Tab-based visualization switching
 - Individual clear buttons for each plot
 - Automatic parameter deselection after plot generation
 
 ✅ **Time Series Visualization**
 - Multi-parameter time series plots
-- Shared x-axis for parameter comparison
+- Synchronized x-axis zooming with independent y-axis scales
 - Interactive features (zoom, pan, tooltips)
 - Dynamic subplot creation based on selected parameters
 - Individual plot management
@@ -43,6 +44,7 @@ The application is stable for its core functionality but still has areas for imp
 - Predefined categories for common parameter groups
 - Parameter filtering by category
 - Visual indication of active category filter
+- Quick selection of all visible parameters
 
 ## What's Left to Build
 
@@ -62,7 +64,6 @@ The application is stable for its core functionality but still has areas for imp
 - Parameter search functionality
 - Improved parameter list organization
 - Better visual feedback during data loading
-- Dedicated "Show All" button for parameter filtering
 
 ### Medium Priority
 
@@ -147,18 +148,27 @@ As the project evolved, several key decisions shaped its current state:
    - Evolved to a split-panel approach with resizable areas
    - Added tab-based organization for different visualization types
    - Implemented individual plot management with dedicated clear buttons
+   - Added "Select All Visible" button for improved workflow
+   - Removed global "Clear Plot" buttons in favor of individual plot management
 
 3. **Parameter Organization**
    - Initially listed all parameters alphabetically
    - Added category-based organization to improve usability
    - Evolved from category-based selection to category-based filtering
    - Added visual indication of active category filters
+   - Implemented "Select All Visible" functionality for quick selection of filtered parameters
 
 4. **Data Handling**
    - Started with basic CSV parsing
    - Developed robust handling for the complex three-line header structure
    - Implemented proper mapping between abbreviated and full parameter names
    - Improved filtering of valid columns for display and analysis
+
+5. **Visualization Capabilities**
+   - Initially implemented basic time series plots
+   - Added XY plot functionality for parameter correlation analysis
+   - Implemented synchronized x-axis zooming with independent y-axis scales
+   - Enhanced subplot configuration for better visualization of parameters with different value ranges
 
 ### Future Direction
 
@@ -198,12 +208,18 @@ Based on experience and user feedback, the project is evolving toward:
    - Category-based parameter grouping
    - Category filtering functionality
    - Multi-parameter selection
+   - Quick selection of filtered parameters
 
 4. **Bug Fixes and Stability** - *Completed*
    - Fixed QtWebEngineWidgets initialization issues
    - Resolved file access errors
    - Improved parameter handling from CSV files
    - Enhanced user interface with individual plot management
+
+5. **UI Enhancements** - *Completed*
+   - Added "Select All Visible" button for quick parameter selection
+   - Removed global "Clear Plot" buttons in favor of individual plot management
+   - Implemented synchronized x-axis zooming with independent y-axis scales
 
 ### Upcoming Milestones
 

@@ -27,6 +27,7 @@
    - Interactive visualization library
    - Generates HTML/JavaScript-based plots
    - Provides rich interactive features (zoom, pan, tooltips)
+   - Supports advanced subplot configuration
 
 ### File Formats
 
@@ -152,30 +153,68 @@ df = pd.read_csv(file_path, skiprows=2, header=0)
 numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
 ```
 
-### Visualization Creation
-
-#### Time Series Plot
+### Parameter Selection
 
 ```python
-# Create a subplot for each parameter
+# Select all visible parameters
+def select_all_visible_parameters(self):
+    """Select all parameters that are currently visible in the list."""
+    # First, clear current selection
+    self.param_list.clearSelection()
+    
+    # Then select all visible items
+    for i in range(self.param_list.count()):
+        item = self.param_list.item(i)
+        if not item.isHidden():
+            item.setSelected(True)
+```
+
+### Visualization Creation
+
+#### Time Series Plot with Independent Y-axis Scales
+
+```python
+# Group parameters by units
+param_units = {}
+for i, display_name in enumerate(selected_display_names):
+    unit = self.extract_unit(display_name)
+    if unit not in param_units:
+        param_units[unit] = []
+    param_units[unit].append((selected_params[i], display_name))
+
+# Create a subplot for each unit group
+unit_groups = list(param_units.keys())
 fig = make_subplots(
-    rows=len(selected_params), 
+    rows=len(unit_groups), 
     cols=1, 
-    shared_xaxes=True, 
+    shared_xaxes=True,  # Share x-axes between subplots
     vertical_spacing=0.02,
-    subplot_titles=selected_display_names
+    subplot_titles=[f"Unit: {unit}" for unit in unit_groups]
 )
 
-# Add a trace for each parameter
-for i, param in enumerate(selected_params):
-    fig.add_trace(
-        go.Scatter(x=df[time_column], y=df[param], name=param),
-        row=i+1, col=1
-    )
+# Add traces to the appropriate subplot based on unit
+for i, unit in enumerate(unit_groups):
+    for param, display_name in param_units[unit]:
+        fig.add_trace(
+            go.Scatter(
+                x=self.df[time_column], 
+                y=self.df[param], 
+                name=display_name
+            ),
+            row=i+1, col=1
+        )
 
-# Create a temporary HTML file and display it
-temp_file = os.path.join(os.getcwd(), "temp-plot.html")
-plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False)
+# Configure subplot linking for synchronized x-axis zooming only
+# This allows independent y-axis scales for each subplot
+if len(unit_groups) > 1:
+    # Create a list of all subplot references
+    subplot_refs = [f"xy{i+1}" for i in range(len(unit_groups))]
+    
+    # Link only the x-axes between subplots
+    # The first subplot's x-axis will be the reference
+    for i in range(1, len(subplot_refs)):
+        # Link each subplot's x-axis to the first subplot's x-axis
+        fig._layout_obj['xaxis' + subplot_refs[i][-1]]['matches'] = 'x' + subplot_refs[0][-1]
 ```
 
 #### XY Plot
@@ -197,20 +236,9 @@ temp_file = os.path.join(os.getcwd(), "temp-plot.html")
 plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False)
 ```
 
-### Plot Display
+### Plot Display and Management
 
 ```python
-# Import QtWebEngineWidgets early in the file
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import Qt, QUrl
-
-# Set Qt attribute before creating QApplication
-QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
-
-# Create a browser widget to display the plot
-browser = QWebEngineView()
-browser.load(QUrl.fromLocalFile(plot_path))
-
 # Create a container for the plot and its clear button
 plot_container = QWidget()
 plot_layout = QVBoxLayout(plot_container)
@@ -223,8 +251,11 @@ button_layout.addWidget(clear_button)
 button_layout.addStretch()
 plot_layout.addLayout(button_layout)
 
-# Add the browser to the container
-plot_layout.addWidget(browser)
+# Create a browser widget to display the plot with size policy for expansion
+browser = ZoomableWebEngineView()
+browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+browser.load(QUrl.fromLocalFile(plot_path))
+plot_layout.addWidget(browser, 1)  # Add with stretch factor of 1
 
 # Add the container to the layout
 self.time_series_layout.addWidget(plot_container)
@@ -292,4 +323,19 @@ The application integrates PyQt with Plotly using PyQtWebEngine:
 3. Application logic updates data model and generates visualizations
 4. Visualizations are displayed in embedded web views with individual clear buttons
 5. User can interact with both PyQt components and embedded visualizations
-6. User can clear individual plots or all plots
+6. User can clear individual plots using dedicated clear buttons
+
+### Parameter Selection Flow
+
+1. User clicks a category button to filter parameters
+2. User clicks "Select All Visible" to select all filtered parameters
+3. User clicks "Generate Plot" to create visualization
+4. Parameters are automatically deselected after plot generation
+
+### Subplot Synchronization
+
+1. Subplots are created with shared x-axes
+2. X-axes are linked using Plotly's 'matches' property
+3. Y-axes remain independent for optimal scaling
+4. When user zooms on one subplot, all x-axes zoom together
+5. Y-axes maintain their own scales based on the data range
