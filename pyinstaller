@@ -1,1 +1,0 @@
-/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" --hidden-import pandas --hidden-import numpy --hidden-import plotly --hidden-import plotly.graph_objects --hidden-import plotly.subplots --hidden-import PyQt5 --hidden-import PyQt5.QtWebEngineWidgets engine_data_visualizer.py

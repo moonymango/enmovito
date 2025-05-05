@@ -40,7 +40,7 @@
 
 ### Environment Management
 
-The project uses a dedicated virtual environment for development and execution. The specific virtual environment to use is:
+The project uses a dedicated virtual environment for development and execution:
 
 ```
 /home/moonymango/venv/qt
@@ -55,23 +55,23 @@ This virtual environment contains all the necessary dependencies:
 - Plotly
 - PyInstaller for packaging (already installed in the virtual environment)
 
-To run the application using this virtual environment:
+To run the application using the virtual environment:
 
 ```bash
-/home/moonymango/venv/qt/bin/python engine_data_visualizer.py
+/home/moonymango/venv/qt/bin/python enmovito.py
 ```
 
 To create a standalone executable using PyInstaller:
 
 ```bash
 # Using the spec file (recommended)
-/home/moonymango/venv/qt/bin/pyinstaller engine_data_visualizer.spec
+/home/moonymango/venv/qt/bin/pyinstaller enmovito.spec
 
 # Or using command-line arguments (with example logs)
-/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py
+/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" enmovito.py
 
 # Or using command-line arguments (without example logs)
-/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" engine_data_visualizer.py
+/home/moonymango/venv/qt/bin/pyinstaller --onefile --windowed --add-data "themes:themes" enmovito.py
 ```
 
 ### Dependencies
@@ -83,6 +83,7 @@ PyQtWebEngine>=5.15.0
 pandas>=1.0.0
 numpy>=1.18.0
 plotly>=4.14.0
+pyinstaller>=4.0
 ```
 
 ### Development Tools
@@ -99,9 +100,9 @@ plotly>=4.14.0
    - PyInstaller is used to create standalone executables
    - Creates self-contained packages for Linux and Windows
    - Includes all necessary dependencies and resources
-   - Command with example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" engine_data_visualizer.py`
-   - Command without example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" engine_data_visualizer.py`
-   - Preferred method: Use the spec file with `pyinstaller engine_data_visualizer.spec`
+   - Command with example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" --add-data "example_logs:example_logs" enmovito.py`
+   - Command without example logs: `pyinstaller --onefile --windowed --add-data "themes:themes" enmovito.py`
+   - Preferred method: Use the spec file with `pyinstaller enmovito.spec`
 
 ## Technical Constraints
 

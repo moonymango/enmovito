@@ -3,3 +3,4 @@ PyQtWebEngine>=5.15.0
 pandas>=1.0.0
 numpy>=1.18.0
 plotly>=4.14.0
+pyinstaller>=4.0
