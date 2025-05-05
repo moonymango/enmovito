@@ -171,8 +171,7 @@ The current focus is on:
 
 ### Code Organization
 
-- Main application logic in `engine_data_visualizer.py`
-- Example usage patterns in `example_usage.py`
+- Main application logic in `enmovito.py`
 - Clear separation between UI setup, data handling, and visualization logic
 - Modular methods for specific functionality (e.g., `show_all_parameters`, `clear_specific_ts_plot`, `select_all_visible_parameters`)
 
@@ -183,7 +182,6 @@ The current focus is on:
 - Consistent color schemes for parameter types
 - Shared x-axis for time series plots for easy comparison
 - Independent y-axis scales for optimal visualization of different value ranges
-- Individual clear buttons for each plot with descriptive labels
 
 ### User Interaction Patterns
 
@@ -192,7 +190,6 @@ The current focus is on:
 - "Select All Visible" button for quick selection of filtered parameters
 - Tab-based navigation between visualization types
 - Direct interaction with plots for exploration
-- Individual plot clearing for focused analysis
 
 ## Project Insights
 

@@ -7,7 +7,6 @@ A Python desktop application for visualizing and analyzing engine data logs from
 - **Interactive Time Series Visualization**: Plot multiple engine parameters over time with interactive zooming, panning, and tooltips.
 - **XY Plot Capability**: Create scatter plots to analyze relationships between different parameters.
 - **Parameter Categories**: Quickly select related parameters using predefined categories (GPS, Altitude, Engine, etc.).
-- **Customizable Time Axis**: Select different time columns for the x-axis.
 - **User-Friendly Interface**: Simple GUI with intuitive controls for data exploration.
 - **Dark and Light Themes**: Choose between dark and light themes for visual comfort.
 - **Temperature Unit Conversion**: Switch between Fahrenheit and Celsius for temperature parameters.
@@ -49,11 +48,11 @@ python enmovito.py
 You can build a standalone executable using PyInstaller with one of the spec files:
 
 ```bash
-# Build with example logs
-pyinstaller enmovito.spec
+# linux
+pyinstaller enmovito_linux.spec
 
-# Build without example logs
-pyinstaller enmovito_no_examples.spec
+# windows
+pyinstaller enmovito_windows.spec
 ```
 
 The executable will be created in the `dist` folder.
@@ -66,7 +65,6 @@ The executable will be created in the `dist` folder.
    - Choose individual parameters from the list
    - Or use the category buttons to select groups of related parameters
 5. Click "Generate Plot" to create time series visualizations.
-6. Use the "XY Plot" tab to create scatter plots between any two parameters.
 
 ## Interacting with Plots
 
