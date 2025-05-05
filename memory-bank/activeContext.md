@@ -54,6 +54,11 @@ The current focus is on:
 - Resolved file access errors with temporary plot files
   - Used specific paths for temporary HTML files
   - Ensured file paths are absolute
+- Fixed theme loading in PyInstaller-packaged executable
+  - Added resource_path helper function to correctly locate theme files
+  - Modified apply_theme method to use the helper function
+  - Added fallback theme styling for cases where theme files can't be loaded
+  - Added detailed logging for theme file loading
 - Improved parameter handling from CSV files
   - Correctly parsed the complex three-line header structure
   - Used full parameter names from the second row for display
@@ -74,6 +79,9 @@ The current focus is on:
 - Created the split-panel interface with control and visualization areas
 - Added file selection functionality with default directory set to example_logs
 - Implemented parameter selection with both individual and category-based options
+- Added build configuration for PyInstaller packaging
+  - Created spec file with example logs for complete package
+  - Created optimized spec file without example logs for smaller executable size
 
 ### Visualization Implementation
 
@@ -148,6 +156,8 @@ The current focus is on:
 - **Visualization Embedding**: Using QWebEngineView to embed Plotly visualizations within PyQt
 - **Complex Header Handling**: Special parsing for the three-line header structure in CSV files
 - **Subplot Linking**: Using Plotly's 'matches' property to link only x-axes between subplots
+- **Resource Path Handling**: Using a helper function to locate resources correctly whether running from source or as a packaged executable
+- **Fallback Theme Styling**: Implementing inline CSS as a fallback when theme files can't be loaded
 
 ### Open Questions
 

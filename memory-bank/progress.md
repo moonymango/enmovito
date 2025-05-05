@@ -242,6 +242,10 @@ Based on experience and user feedback, the project is evolving toward:
    - ✅ Create self-contained executable for Linux
    - 🔲 Create self-contained executable for Windows
    - ✅ Include all necessary dependencies and resources (themes only, example logs excluded)
+   - ✅ Fixed theme loading in PyInstaller-packaged executable
+     - Added resource_path helper function to correctly locate theme files
+     - Added fallback theme styling for cases where theme files can't be loaded
+     - Created optimized spec file without example logs for smaller executable size
 
 2. **Performance Optimization** - *In Progress*
    - Data decimation implementation

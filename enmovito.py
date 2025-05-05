@@ -25,6 +25,18 @@ pio.renderers.default = "browser"
 # Set plotly dark theme as default
 pio.templates.default = "plotly_dark"
 
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+        print(f"Running from PyInstaller bundle. MEIPASS: {base_path}")
+    except Exception:
+        base_path = os.path.abspath(".")
+        print(f"Running from source. Base path: {base_path}")
+
+    return os.path.join(base_path, relative_path)
+
 
 # Custom QListWidget with shift-click selection
 class ShiftSelectListWidget(QListWidget):
@@ -147,7 +159,6 @@ class Enmovito(QMainWindow):
 
         # Placeholders for error handling
         self.plot_placeholder = QLabel("Select a log file and parameters to visualize")
-        self.xy_plot_placeholder = QLabel("Select X and Y parameters for XY plot")
 
         # Create the main widget and layout
         self.central_widget = QWidget()
@@ -187,12 +198,15 @@ class Enmovito(QMainWindow):
             theme_name (str): The name of the theme to apply. Default is "dark".
                               Available themes: "dark", "light"
         """
-        # Define the path to the theme file
-        theme_file = f"themes/{theme_name}_theme.qss"
-
+        # Define the path to the theme file using resource_path
+        theme_file = resource_path(f"themes/{theme_name}_theme.qss")
+        
+        print(f"Looking for theme file at: {theme_file}")
+        print(f"Current working directory: {os.getcwd()}")
+        
         try:
             # Read the stylesheet from the file
-            with open(theme_file, "r") as f:
+            with open(theme_file, "r", encoding='utf-8') as f:
                 stylesheet = f.read()
 
             # Apply the stylesheet
@@ -202,6 +216,17 @@ class Enmovito(QMainWindow):
             print(f"Error loading theme file {theme_file}: {str(e)}")
             # Fallback to default style
             self.setStyleSheet("")
+            
+            # Apply a minimal fallback theme directly in code
+            fallback_style = """
+            QWidget { background-color: #2D2D30; color: #E0E0E0; }
+            QPushButton { background-color: #444444; color: white; border: none; border-radius: 3px; padding: 5px 10px; }
+            QListWidget, QComboBox { background-color: #252526; border: 1px solid #3E3E40; }
+            QListWidget::item:selected { background-color: #0E639C; color: white; }
+            """
+            if theme_name == "dark":
+                self.setStyleSheet(fallback_style)
+                print("Applied minimal fallback dark theme")
 
     def apply_dark_theme(self):
         """Apply dark theme to the application using QSS."""
@@ -650,7 +675,6 @@ class Enmovito(QMainWindow):
                 f"Data loaded from {os.path.basename(file_path)}\n"
                 f"Select parameters and click 'Generate Plot'"
             )
-            self.xy_plot_placeholder.setText("Select X and Y parameters for XY plot")
 
         except Exception as e:
             self.file_label.setText(f"Error loading file: {str(e)}")
@@ -1046,7 +1070,7 @@ class Enmovito(QMainWindow):
         plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
 
         # Add custom CSS to remove the frame around the entire plot
-        with open(plot_path, 'r') as file:
+        with open(temp_file, 'r', encoding='utf-8') as file:
             html_content = file.read()
 
         # Insert custom CSS to remove the frame and set body background
@@ -1072,7 +1096,7 @@ class Enmovito(QMainWindow):
         html_content = html_content.replace('</head>', f'{custom_css}</head>')
 
         # Write the modified HTML back to the file
-        with open(plot_path, 'w') as file:
+        with open(temp_file, 'w', encoding='utf-8') as file:
             file.write(html_content)
 
         print(f"Plot saved to: {plot_path}")
@@ -1120,351 +1144,6 @@ class Enmovito(QMainWindow):
         # Clear the parameter selection
         self.param_list.clearSelection()
 
-    def generate_xy_plot(self):
-        # Get the selected X parameter from the X-axis list
-        selected_x_items = self.x_axis_list.selectedItems()
-        if not selected_x_items:
-            # Show a message in the current tab
-            current_tab_index = self.plot_tabs.currentIndex()
-            current_tab = self.plot_tabs.widget(current_tab_index)
-            current_tab_layout = current_tab.layout()
-
-            # Clear the tab layout
-            while current_tab_layout.count():
-                item = current_tab_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-
-            # Add a placeholder
-            placeholder = QLabel("Please select an X parameter")
-            placeholder.setAlignment(Qt.AlignCenter)
-            placeholder.setFont(QFont("Arial", 14))
-            current_tab_layout.addWidget(placeholder)
-            return
-
-        # Get the actual column name for the selected X-axis parameter
-        x_display = selected_x_items[0].text()
-        x_param = selected_x_items[0].data(Qt.UserRole)
-
-        # Get the selected Y parameters from the parameter list
-        selected_items = self.param_list.selectedItems()
-        selected_params = [item.data(Qt.UserRole) for item in selected_items]
-        selected_display_names = [item.text() for item in selected_items]
-
-        if not x_param:
-            # Show a message in the current tab
-            current_tab_index = self.plot_tabs.currentIndex()
-            current_tab = self.plot_tabs.widget(current_tab_index)
-            current_tab_layout = current_tab.layout()
-
-            # Clear the tab layout
-            while current_tab_layout.count():
-                item = current_tab_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-
-            # Add a placeholder
-            placeholder = QLabel("Please select an X parameter")
-            placeholder.setAlignment(Qt.AlignCenter)
-            placeholder.setFont(QFont("Arial", 14))
-            current_tab_layout.addWidget(placeholder)
-            return
-
-        if not selected_params:
-            # Show a message in the current tab
-            current_tab_index = self.plot_tabs.currentIndex()
-            current_tab = self.plot_tabs.widget(current_tab_index)
-            current_tab_layout = current_tab.layout()
-
-            # Clear the tab layout
-            while current_tab_layout.count():
-                item = current_tab_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-
-            # Add a placeholder
-            placeholder = QLabel("Please select at least one Y parameter")
-            placeholder.setAlignment(Qt.AlignCenter)
-            placeholder.setFont(QFont("Arial", 14))
-            current_tab_layout.addWidget(placeholder)
-            return
-
-        # Filter out non-numeric parameters
-        numeric_params = []
-        numeric_display_names = []
-        for i, param in enumerate(selected_params):
-            if param in self.numeric_columns:
-                numeric_params.append(param)
-                numeric_display_names.append(selected_display_names[i])
-
-        if not numeric_params:
-            # Show a message in the current tab
-            current_tab_index = self.plot_tabs.currentIndex()
-            current_tab = self.plot_tabs.widget(current_tab_index)
-            current_tab_layout = current_tab.layout()
-
-            # Clear the tab layout
-            while current_tab_layout.count():
-                item = current_tab_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-
-            # Add a placeholder
-            placeholder = QLabel("Please select at least one numeric Y parameter")
-            placeholder.setAlignment(Qt.AlignCenter)
-            placeholder.setFont(QFont("Arial", 14))
-            current_tab_layout.addWidget(placeholder)
-            return
-
-        # Use only numeric parameters for plotting
-        selected_y_params = numeric_params
-        selected_y_display_names = numeric_display_names
-
-        # Get the unit for the X parameter
-        x_unit = self.extract_unit(x_display)
-
-        # Check if we need to convert X temperature values
-        x_values = self.df[x_param].copy()
-        if self.use_celsius and "deg F" in x_unit:
-            x_values = x_values.apply(self.fahrenheit_to_celsius)
-            x_display = x_display.replace("deg F", "deg C")
-
-        # Group Y parameters by units
-        param_units = {}
-        for i, display_name in enumerate(selected_y_display_names):
-            unit = self.extract_unit(display_name)
-            if unit not in param_units:
-                param_units[unit] = []
-            param_units[unit].append((selected_y_params[i], display_name))
-
-        # Create a subplot for each unit group
-        unit_groups = list(param_units.keys())
-
-        if len(unit_groups) == 1:
-            # If there's only one unit group, create a single plot
-            fig = go.Figure()
-
-            # Add traces for each Y parameter
-            for param, display_name in param_units[unit_groups[0]]:
-                # Check if this is a temperature parameter and if we need to convert to Celsius
-                y_values = self.df[param].copy()
-                y_display = display_name
-
-                # Convert Y temperature values if needed
-                if self.use_celsius and "deg F" in unit_groups[0]:
-                    y_values = y_values.apply(self.fahrenheit_to_celsius)
-                    y_display = y_display.replace("deg F", "deg C")
-
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_values,
-                        y=y_values,
-                        mode='markers',
-                        name=y_display
-                    )
-                )
-
-            # Set the title and axis labels
-            fig.update_layout(
-                title_text=f"XY Plot: Multiple Parameters vs {x_display}",
-                xaxis_title=x_display,
-                yaxis_title=unit_groups[0] if unit_groups[0] != "Unknown" else ""
-            )
-        else:
-            # If there are multiple unit groups, create subplots
-            fig = make_subplots(
-                rows=len(unit_groups),
-                cols=1,
-                shared_xaxes=True,  # Share x-axes between subplots
-                vertical_spacing=0.02,
-                subplot_titles=[f"Unit: {unit}" for unit in unit_groups]
-            )
-
-            # Add traces to the appropriate subplot based on unit
-            for i, unit in enumerate(unit_groups):
-                for param, display_name in param_units[unit]:
-                    # Check if this is a temperature parameter and if we need to convert to Celsius
-                    y_values = self.df[param].copy()
-                    unit_label = unit
-
-                    # Convert temperature values if needed
-                    if self.use_celsius and "deg F" in unit:
-                        y_values = y_values.apply(self.fahrenheit_to_celsius)
-                        unit_label = unit.replace("deg F", "deg C")
-                        # Update subplot title
-                        fig.layout.annotations[i].text = f"Unit: {unit_label}"
-
-                    fig.add_trace(
-                        go.Scatter(
-                            x=x_values,
-                            y=y_values,
-                            mode='markers',
-                            name=display_name
-                        ),
-                        row=i+1, col=1
-                    )
-
-            # Configure subplot linking for synchronized x-axis zooming only
-            # This allows independent y-axis scales for each subplot
-            if len(unit_groups) > 1:
-                # Create a list of all subplot references
-                subplot_refs = [f"xy{i+1}" for i in range(len(unit_groups))]
-
-                # Link only the x-axes between subplots
-                # The first subplot's x-axis will be the reference
-                for i in range(1, len(subplot_refs)):
-                    # Link each subplot's x-axis to the first subplot's x-axis
-                    fig._layout_obj['xaxis' + subplot_refs[i][-1]]['matches'] = 'x' + subplot_refs[0][-1]
-
-            # Set the title
-            fig.update_layout(
-                title_text=f"XY Plot: Multiple Parameters vs {x_display}"
-            )
-
-        # Update layout with responsive sizing, mouse wheel zoom, and hover features
-        fig.update_layout(
-            autosize=True,  # Enable autosize for responsive behavior
-            # Title is already set above based on the number of unit groups
-            xaxis_title=x_display,
-            margin=dict(l=50, r=50, t=100, b=50),  # Add some margin for better appearance
-            # Enable mouse wheel zoom
-            modebar_add=['scrollZoom'],
-            dragmode='zoom',  # Default drag mode is zoom
-            # Enable hover mode with closest point
-            hovermode='closest',  # Show hover info for closest point
-            hoverdistance=100,  # Increase hover distance for better usability,
-            hoverlabel=dict(
-                bgcolor="#2D2D30",
-                font_size=12,
-                font_family="Arial",
-                font_color="#E0E0E0"
-            ),
-            paper_bgcolor="#1E1E1E",  # Background color of the plot
-            plot_bgcolor="#252526",    # Background color of the plotting area
-            # Remove the bright frame around the plot area
-            xaxis=dict(
-                showline=False,
-                linewidth=0,
-                linecolor="#252526",
-                mirror=False,
-                showgrid=True,
-                gridcolor="#333333",
-                zeroline=False
-            ),
-            yaxis=dict(
-                showline=False,
-                linewidth=0,
-                linecolor="#252526",
-                mirror=False,
-                showgrid=True,
-                gridcolor="#333333",
-                zeroline=False
-            ),
-        )
-
-        # Set config to enable scrollZoom and hover features
-        config = {
-            'scrollZoom': True,
-            'displayModeBar': True,
-            'modeBarButtonsToAdd': ['scrollZoom'],
-            'displaylogo': False,  # Hide Plotly logo
-            'toImageButtonOptions': {
-                'format': 'png',
-                'filename': 'plot',
-                'height': 800,
-                'width': 1200,
-                'scale': 1
-            },
-            'responsive': True,
-            'frameMargins': 0,  # Remove frame margins
-        }
-
-        # Add custom CSS to the figure's layout
-        fig.layout.template.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
-        fig.layout.template.layout.paper_bgcolor = "#1E1E1E"
-        fig.layout.template.layout.plot_bgcolor = "#252526"
-        fig.layout.margin = dict(t=50, b=50, l=50, r=50, pad=0)
-
-        # Create a temporary HTML file and display it
-        temp_file = os.path.join(os.getcwd(), "temp-plot.html")
-        plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False, config=config)
-
-        # Add custom CSS to remove the frame around the entire plot
-        with open(plot_path, 'r') as file:
-            html_content = file.read()
-
-        # Insert custom CSS to remove the frame and set body background
-        custom_css = """
-        <style>
-        body {
-            background-color: #1E1E1E !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .plotly, .plot-container, .svg-container {
-            border: none !important;
-            box-shadow: none !important;
-            background: #1E1E1E !important;
-        }
-        .js-plotly-plot, .plotly, .plotly div {
-            background-color: #1E1E1E !important;
-        }
-        </style>
-        """
-
-        # Insert the custom CSS right before the </head> tag
-        html_content = html_content.replace('</head>', f'{custom_css}</head>')
-
-        # Write the modified HTML back to the file
-        with open(plot_path, 'w') as file:
-            file.write(html_content)
-
-        print(f"Plot saved to: {plot_path}")
-
-        # Get the current tab
-        current_tab_index = self.plot_tabs.currentIndex()
-        current_tab = self.plot_tabs.widget(current_tab_index)
-
-        # Check if there's already a plot in this tab
-        if current_tab_index in self.tab_plot_browsers and self.tab_plot_browsers[current_tab_index] is not None:
-            # There's already a plot in this tab, so we'll update it
-            # Get the existing browser
-            browser = self.tab_plot_browsers[current_tab_index]
-
-            # Load the new plot
-            browser.load(QUrl.fromLocalFile(plot_path))
-
-            # Store the figure data for future reference
-            self.tab_figures[current_tab_index] = fig
-        else:
-            # This is the first plot in the tab, so we need to create a new browser
-            # Clear the tab layout
-            tab_layout = current_tab.layout()
-            while tab_layout.count():
-                item = tab_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-
-            # Create a browser widget to display the plot
-            browser = ZoomableWebEngineView()
-            browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            browser.load(QUrl.fromLocalFile(plot_path))
-
-            # Add the browser to the tab layout
-            tab_layout.addWidget(browser)
-
-            # Store references to the browser and figure for the current tab
-            self.tab_plot_browsers[current_tab_index] = browser
-            self.tab_figures[current_tab_index] = fig
-
-        # No need to enable the main clear button as it's been removed
-
-        # No need to clear parameter selection for XY plot as it uses combo boxes
 
     def clear_tab_plot(self, tab_index):
         """Clear the plot from a specific tab."""
@@ -1488,30 +1167,6 @@ class Enmovito(QMainWindow):
             placeholder.setAlignment(Qt.AlignCenter)
             placeholder.setFont(QFont("Arial", 14))
             tab_layout.addWidget(placeholder)
-
-    def clear_time_series_plot(self):
-        """Clear all time series plots and restore the placeholder."""
-        # Remove all browser widgets and containers
-        for browser, container in self.ts_browsers:
-            container.setParent(None)
-
-        # Clear the list
-        self.ts_browsers = []
-
-        # Show the placeholder again
-        self.plot_placeholder.setVisible(True)
-
-    def clear_xy_plot(self):
-        """Clear all XY plots and restore the placeholder."""
-        # Remove all browser widgets and containers
-        for browser, container in self.xy_browsers:
-            container.setParent(None)
-
-        # Clear the list
-        self.xy_browsers = []
-
-        # Show the placeholder again
-        self.xy_plot_placeholder.setVisible(True)
 
     def select_all_visible_parameters(self):
         """Select all parameters that are currently visible in the list."""
