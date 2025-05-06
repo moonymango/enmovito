@@ -3,20 +3,21 @@ import os
 import numpy as np
 import pandas as pd
 from enmovito.data_handler import DataHandler
+from enmovito.gui.visualization import VisualizationPanel
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.io as pio
+from plotly.offline import plot
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QFont, QPalette, QColor
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QListWidget, QLabel, QFileDialog, QTabWidget, QSplitter,
+    QPushButton, QListWidget, QLabel, QFileDialog, QSplitter, QTabWidget,
     QListWidgetItem, QGroupBox, QGridLayout, QSizePolicy, QRadioButton, QButtonGroup,
     QDialog
 )
 # Import QtWebEngineWidgets early
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-import plotly.io as pio
-from plotly.offline import plot
 # Set Qt attribute before creating QApplication
 QApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
