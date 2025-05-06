@@ -1,7 +1,8 @@
 import sys
 import os
-import pandas as pd
 import numpy as np
+import pandas as pd
+from enmovito.data_handler import DataHandler
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from PyQt5.QtCore import Qt, QUrl
@@ -146,12 +147,9 @@ class Enmovito(QMainWindow):
         # Apply dark theme
         self.apply_dark_theme()
 
-        # Data storage
-        self.df = None
-        self.log_file_path = None
-        self.numeric_columns = []
+        # Initialize data handler
+        self.data_handler = DataHandler()
         self.time_column = "Lcl Time"  # Default time column
-        self.use_celsius = False  # Default to Fahrenheit
 
         # Initialize empty lists for backward compatibility
         self.ts_browsers = []
@@ -469,13 +467,13 @@ class Enmovito(QMainWindow):
 
     def set_fahrenheit(self):
         """Set temperature unit to Fahrenheit."""
-        self.use_celsius = False
+        self.data_handler.set_temperature_unit(False)
         # Regenerate any existing plots with the new unit
         self.regenerate_plots_with_new_unit()
 
     def set_celsius(self):
         """Set temperature unit to Celsius."""
-        self.use_celsius = True
+        self.data_handler.set_temperature_unit(True)
         # Regenerate any existing plots with the new unit
         self.regenerate_plots_with_new_unit()
 
@@ -515,11 +513,11 @@ class Enmovito(QMainWindow):
 
     def get_temp_unit_name(self):
         """Get the name of the current temperature unit."""
-        return "Celsius (°C)" if self.use_celsius else "Fahrenheit (°F)"
+        return self.data_handler.get_temperature_unit_name()
 
     def fahrenheit_to_celsius(self, f_value):
         """Convert Fahrenheit to Celsius."""
-        return (f_value - 32) * 5/9
+        return self.data_handler.fahrenheit_to_celsius(f_value)
 
     def setup_viz_panel(self):
         # Create a tab widget for multiple plot workspaces
@@ -842,7 +840,7 @@ class Enmovito(QMainWindow):
 
         # Check if we need to convert X temperature values
         x_values = self.df[x_param].copy()
-        if self.use_celsius and "deg F" in x_unit:
+        if self.data_handler.get_temperature_unit() and "deg F" in x_unit:
             x_values = x_values.apply(self.fahrenheit_to_celsius)
             x_display = x_display.replace("deg F", "deg C")
 
@@ -909,7 +907,7 @@ class Enmovito(QMainWindow):
                     unit_label = unit
 
                     # Convert temperature values if needed
-                    if self.use_celsius and "deg F" in unit:
+                    if self.data_handler.get_temperature_unit() and "deg F" in unit:
                         y_values = y_values.apply(self.fahrenheit_to_celsius)
                         unit_label = unit.replace("deg F", "deg C")
                         # Update subplot title
@@ -942,7 +940,7 @@ class Enmovito(QMainWindow):
                     unit_label = unit
 
                     # Convert temperature values if needed
-                    if self.use_celsius and "deg F" in unit:
+                    if self.data_handler.get_temperature_unit() and "deg F" in unit:
                         y_values = y_values.apply(self.fahrenheit_to_celsius)
                         unit_label = unit.replace("deg F", "deg C")
                         # Update subplot title
