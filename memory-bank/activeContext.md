@@ -5,7 +5,6 @@
 The Enmovito project is now in a fully functional state with core visualization capabilities implemented and recent bugs fixed. The application can:
 
 1. Load engine data logs from CSV files
-2. Display time series visualizations of multiple parameters
 3. Create XY plots to analyze relationships between parameters
 4. Organize parameters into categories for easier selection
 5. Filter parameters by category for improved usability
@@ -19,6 +18,7 @@ The Enmovito project is now in a fully functional state with core visualization 
 
 The current focus is on:
 
+- **Code refactoring and modularization** to improve maintainability and extensibility
 - Optimizing the application for different platforms
 - Ensuring robust handling of different CSV file formats
 - Improving visualization performance with large datasets
@@ -26,6 +26,20 @@ The current focus is on:
 - Enhancing the user experience with additional UI improvements
 
 ## Recent Changes
+
+### Code Refactoring and Modularization
+
+- Continued refactoring the application into a more modular structure:
+  - Removed the `extract_unit` function from enmovito.py as it has been moved to the DataHandler class
+  - Removed the `fahrenheit_to_celsius` function from enmovito.py as it has been moved to the DataHandler class
+  - Removed the `setup_viz_panel` function from enmovito.py as it has been moved to the VisualizationPanel class
+  - Refactored the `on_plot_requested` method to use the VisualizationPanel's generate_plot method
+  - Extracted the main window functionality from enmovito.py to a dedicated MainWindow class in gui/main_window.py
+  - Simplified enmovito.py to serve only as the application entry point
+  - Cleaned up imports that were no longer needed after the refactoring
+  - Updated references to use the DataHandler and VisualizationPanel methods instead of local implementations
+  - Improved code organization with better separation of concerns
+  - Reduced code duplication by delegating functionality to appropriate classes
 
 ### UI Improvements
 
@@ -86,8 +100,6 @@ The current focus is on:
 ### Visualization Implementation
 
 - Integrated Plotly for interactive visualizations
-- Implemented time series plotting with multiple parameters
-- Added XY plot functionality for parameter correlation analysis
 - Embedded Plotly visualizations in PyQt using QWebEngineView
 - Implemented synchronized x-axis zooming with independent y-axis scales
 
@@ -158,6 +170,10 @@ The current focus is on:
 - **Subplot Linking**: Using Plotly's 'matches' property to link only x-axes between subplots
 - **Resource Path Handling**: Using a helper function to locate resources correctly whether running from source or as a packaged executable
 - **Fallback Theme Styling**: Implementing inline CSS as a fallback when theme files can't be loaded
+- **Modular Architecture**: Moving functionality to dedicated classes to improve maintainability and extensibility
+  - DataHandler for data loading and processing
+  - VisualizationPanel for plot generation and management
+  - ControlPanel for user interface elements
 
 ### Open Questions
 
@@ -172,6 +188,9 @@ The current focus is on:
 ### Code Organization
 
 - Main application logic in `enmovito.py`
+- Data handling functionality in `data_handler.py`
+- Control panel in `gui/control_panel.py`
+- Visualization panel in `gui/visualization.py`
 - Clear separation between UI setup, data handling, and visualization logic
 - Modular methods for specific functionality (e.g., `show_all_parameters`, `clear_specific_ts_plot`, `select_all_visible_parameters`)
 
@@ -196,18 +215,18 @@ The current focus is on:
 ### Strengths
 
 - Intuitive interface for parameter selection and visualization
-- Flexible visualization options with both time series and XY plots
+- Flexible visualization options
 - Good organization of parameters into functional categories with filtering
 - Interactive plots that allow detailed data exploration
 - Individual plot management for focused analysis
 - Synchronized x-axis zooming with independent y-axis scales
 - Quick parameter selection with "Select All Visible" button
+- Modular code structure with clear separation of concerns
 
 ### Areas for Improvement
 
 - Performance with very large datasets
 - More advanced analysis capabilities
-- Better integration between time series and XY plot views
 - Additional visualization types for specific analysis scenarios
 - Visual design of the filtered parameter list
 
@@ -220,3 +239,5 @@ The current focus is on:
 - Individual plot management improves the user experience for comparative analysis
 - Synchronized x-axis zooming with independent y-axis scales is crucial for comparing parameters with different value ranges
 - Quick selection tools like "Select All Visible" significantly improve workflow efficiency
+- Modular code organization improves maintainability and extensibility
+- Delegating functionality to specialized classes reduces code duplication and improves code quality

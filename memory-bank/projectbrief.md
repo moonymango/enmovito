@@ -12,8 +12,6 @@ Enmovito is a Python desktop application designed for visualizing and analyzing 
    - Support multiple time column options
 
 2. **Visualization Capabilities**
-   - Interactive time series plots for multiple engine parameters
-   - XY scatter plots to analyze relationships between parameters
    - Parameter categorization for quick selection of related parameters
    - Customizable time axis selection
 
@@ -51,6 +49,4 @@ Enmovito is a Python desktop application designed for visualizing and analyzing 
 ## Success Criteria
 1. Successfully load and visualize engine data from example log files
 2. Provide intuitive navigation and selection of parameters
-3. Enable interactive exploration of time series data
-4. Support creation of XY plots for parameter correlation analysis
-5. Maintain responsive performance with large datasets
+3. Maintain responsive performance with large datasets
