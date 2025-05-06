@@ -236,6 +236,16 @@ Based on experience and user feedback, the project is evolving toward:
    - Ensured generate button works correctly with both Fahrenheit and Celsius units
    - Created standalone executable for easier distribution
 
+6. **Code Refactoring and Modularization** - *In Progress*
+   - ✅ Created proper package structure with `enmovito/` directory
+   - ✅ Extracted data handling functionality to `data_handler.py`
+   - ✅ Extracted control panel to `gui/control_panel.py`
+   - 🔲 Extract main window to `gui/main_window.py`
+   - 🔲 Extract visualization panel to `gui/visualization.py`
+   - 🔲 Create main application entry point in `main.py`
+   - 🔲 Extract custom widgets to dedicated modules
+   - 🔲 Implement proper communication between components
+
 ### Upcoming Milestones
 
 1. **Application Packaging** - *Partially Completed*

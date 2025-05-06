@@ -19,6 +19,7 @@ The Enmovito project is now in a fully functional state with core visualization 
 
 The current focus is on:
 
+- **Code refactoring and modularization** to improve maintainability and extensibility
 - Optimizing the application for different platforms
 - Ensuring robust handling of different CSV file formats
 - Improving visualization performance with large datasets

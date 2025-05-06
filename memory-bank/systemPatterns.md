@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-Enmovito follows a straightforward desktop application architecture with clear separation of concerns:
+Enmovito has evolved from a monolithic application to a more modular architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -17,6 +17,21 @@ Enmovito follows a straightforward desktop application architecture with clear s
 │   Storage   │ - Analysis Functions    │ - User          │
 │             │                         │   Interaction   │
 └─────────────┴─────────────────────────┴─────────────────┘
+```
+
+The application is now organized into a modular package structure:
+
+```
+enmovito/
+├── __init__.py
+├── data_handler.py       # Data loading and management
+├── gui/
+│   ├── __init__.py
+│   ├── control_panel.py  # User interface for parameter selection
+│   ├── main_window.py    # Main application window (in progress)
+│   └── visualization.py  # Visualization components (in progress)
+├── utils.py              # Utility functions
+└── main.py               # Main application entry point (in progress)
 ```
 
 ### Key Components
