@@ -206,7 +206,7 @@ def select_all_visible_parameters(self):
 
 ### Visualization Creation
 
-#### Time Series Plot with Independent Y-axis Scales
+#### Plot with Independent Y-axis Scales
 
 ```python
 # Group parameters by units
@@ -250,25 +250,6 @@ if len(unit_groups) > 1:
     for i in range(1, len(subplot_refs)):
         # Link each subplot's x-axis to the first subplot's x-axis
         fig._layout_obj['xaxis' + subplot_refs[i][-1]]['matches'] = 'x' + subplot_refs[0][-1]
-```
-
-#### XY Plot
-
-```python
-fig = go.Figure()
-
-fig.add_trace(
-    go.Scatter(
-        x=df[x_param], 
-        y=df[y_param], 
-        mode='markers', 
-        name=f'{y_param} vs {x_param}'
-    )
-)
-
-# Create a temporary HTML file and display it
-temp_file = os.path.join(os.getcwd(), "temp-plot.html")
-plot_path = plot(fig, output_type='file', filename=temp_file, auto_open=False)
 ```
 
 ### Plot Display and Management

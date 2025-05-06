@@ -81,7 +81,7 @@ class VisualizationPanel(QWidget):
     Panel for visualizing engine data.
     
     This class is responsible for creating and managing the visualization
-    of engine data, including time series plots and XY plots.
+    of engine data.
     """
     
     def __init__(self, parent=None):

@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters in both time series and XY plots, and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities. Recent additions include dark theme support, resizable plots, unified X-axis parameter selection, and a standalone executable package.
+Enmovito is now in a fully functional state with core features implemented and recent bugs fixed. The application successfully loads engine data logs, visualizes parameters and provides an intuitive interface for data exploration with improved parameter filtering, plot management, and visualization capabilities. Recent additions include dark theme support, resizable plots, unified X-axis parameter selection, and a standalone executable package.
 
 ### Development Status: Beta
 
@@ -31,15 +31,8 @@ The application is stable for its core functionality but still has areas for imp
 - Resizable plots within tabs using splitters
 - Unified X-axis parameter selection for all plot types
 
-✅ **Time Series Visualization**
-- Multi-parameter time series plots
-- Synchronized x-axis zooming with independent y-axis scales
-- Interactive features (zoom, pan, tooltips)
-- Dynamic subplot creation based on selected parameters
-- Individual plot management
-
 ✅ **XY Plot Visualization**
-- Scatter plot creation for any two parameters
+- Scatter plot creation for any two parameters (time is default fo x axis)
 - Interactive exploration of parameter relationships
 - Proper axis labeling and plot configuration
 - Individual plot management
@@ -174,6 +167,12 @@ As the project evolved, several key decisions shaped its current state:
    - Implemented synchronized x-axis zooming with independent y-axis scales
    - Enhanced subplot configuration for better visualization of parameters with different value ranges
 
+6. **Code Organization**
+   - Started with a monolithic application structure
+   - Evolved to a more modular architecture with clear separation of concerns
+   - Extracted functionality into dedicated classes for better maintainability
+   - Implemented proper communication between components using signals and slots
+
 ### Future Direction
 
 Based on experience and user feedback, the project is evolving toward:
@@ -240,11 +239,16 @@ Based on experience and user feedback, the project is evolving toward:
    - ✅ Created proper package structure with `enmovito/` directory
    - ✅ Extracted data handling functionality to `data_handler.py`
    - ✅ Extracted control panel to `gui/control_panel.py`
+   - ✅ Extracted visualization panel to `gui/visualization.py`
    - 🔲 Extract main window to `gui/main_window.py`
-   - 🔲 Extract visualization panel to `gui/visualization.py`
    - 🔲 Create main application entry point in `main.py`
    - 🔲 Extract custom widgets to dedicated modules
-   - 🔲 Implement proper communication between components
+   - ✅ Implement proper communication between components
+   - ✅ Removed redundant functions from enmovito.py that were moved to specialized classes:
+     - Moved `extract_unit` to DataHandler class
+     - Moved `fahrenheit_to_celsius` to DataHandler class
+     - Moved `setup_viz_panel` to VisualizationPanel class
+     - Refactored `on_plot_requested` to use VisualizationPanel's generate_plot method
 
 ### Upcoming Milestones
 

@@ -29,39 +29,44 @@ enmovito/
 │   ├── __init__.py
 │   ├── control_panel.py  # User interface for parameter selection
 │   ├── main_window.py    # Main application window (in progress)
-│   └── visualization.py  # Visualization components (in progress)
+│   └── visualization.py  # Visualization components and plot generation
 ├── utils.py              # Utility functions
 └── main.py               # Main application entry point (in progress)
 ```
 
 ### Key Components
 
-1. **Data Layer**
+1. **Data Layer (data_handler.py)**
    - CSV file parsing (pandas)
    - Data storage and management (pandas DataFrame)
    - Data filtering and preprocessing
+   - Unit extraction and conversion functions
 
-2. **Application Layer**
-   - Parameter categorization and management
-   - Visualization logic and configuration
-   - Data analysis functions
-   - Subplot synchronization management
+2. **Application Layer (enmovito.py)**
+   - Main application logic
+   - Coordination between components
+   - Event handling and signal connections
+   - Resource management
 
 3. **Presentation Layer**
-   - PyQt5-based GUI components
-   - Plotly visualization integration
-   - User interaction handling
-   - Parameter selection and filtering UI
+   - **Control Panel (gui/control_panel.py)**
+     - Parameter selection and filtering
+     - Category-based organization
+     - User interface controls
+   - **Visualization Panel (gui/visualization.py)**
+     - Plot generation and management
+     - Tab-based organization
+     - Interactive visualization display
 
 ## Design Patterns
 
 ### Model-View-Controller (MVC)
 
-The application loosely follows the MVC pattern:
+The application follows the MVC pattern more closely after refactoring:
 
-- **Model**: Pandas DataFrame storing the engine log data
-- **View**: PyQt5 GUI components and Plotly visualizations
-- **Controller**: Main application class (EngineDataVisualizer) handling user interactions and coordinating between model and view
+- **Model**: DataHandler class managing data loading and processing
+- **View**: ControlPanel and VisualizationPanel classes handling UI presentation
+- **Controller**: Main Enmovito class coordinating between model and views
 
 ### Composite Pattern
 
@@ -74,18 +79,18 @@ The GUI is structured using a composite pattern through PyQt's widget hierarchy:
 
 ### Observer Pattern
 
-The application implements an implicit observer pattern through PyQt's signals and slots mechanism:
+The application implements an observer pattern through PyQt's signals and slots mechanism:
 
 - UI elements emit signals when user interactions occur
 - Slots (methods) are connected to these signals to respond to user actions
-- Parameter list selection changes trigger UI updates
+- Custom signals like plot_requested, temperature_unit_changed, and theme_changed facilitate communication between components
 
 ### Factory Method
 
-While not explicitly implemented as a separate class, the application uses factory-like methods to create visualizations:
+The application uses factory-like methods to create visualizations:
 
-- `generate_plot()` creates time series visualizations
-- `generate_xy_plot()` creates XY scatter plot visualizations
+- VisualizationPanel.generate_plot() creates time series visualizations
+- VisualizationPanel.generate_xy_plot() creates XY scatter plot visualizations
 
 ### Command Pattern
 
@@ -100,25 +105,32 @@ The application implements a simplified command pattern for plot management:
 ### Data Flow
 
 ```
-┌──────────┐     ┌───────────┐     ┌─────────────┐     ┌──────────┐
-│  CSV     │────▶│  Pandas   │────▶│ Parameter   │────▶│  Plotly  │
-│  File    │     │  DataFrame│     │ Selection   │     │  Plots   │
-└──────────┘     └───────────┘     └─────────────┘     └──────────┘
+┌──────────┐     ┌───────────────┐     ┌─────────────────┐     ┌──────────────┐
+│  CSV     │────▶│  DataHandler  │────▶│  ControlPanel   │────▶│ Visualization│
+│  File    │     │  Class        │     │  (Parameter     │     │ Panel        │
+└──────────┘     └───────────────┘     │  Selection)     │     └──────────────┘
+                        │              └─────────────────┘             │
+                        │                       │                      │
+                        │                       ▼                      ▼
+                        │              ┌─────────────────┐     ┌──────────────┐
+                        └──────────────│  Main Enmovito  │────▶│  Plotly      │
+                                       │  Application    │     │  Plots       │
+                                       └─────────────────┘     └──────────────┘
 ```
 
 ### Control Flow
 
 ```
-┌──────────┐     ┌───────────────┐     ┌─────────────┐
-│  User    │────▶│  PyQt GUI     │────▶│ Application │
-│  Action  │     │  Components   │     │ Logic       │
-└──────────┘     └───────────────┘     └─────────────┘
-                         │                    │
-                         │                    ▼
-                         │              ┌─────────────┐
-                         └──────────────│  Update     │
-                                        │  Display    │
-                                        └─────────────┘
+┌──────────┐     ┌───────────────┐     ┌─────────────────┐
+│  User    │────▶│  ControlPanel │────▶│ Main Enmovito   │
+│  Action  │     │  Components   │     │ Application     │
+└──────────┘     └───────────────┘     └─────────────────┘
+                                                │
+                                                ▼
+┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
+│  Display     │◀────│ Visualization │◀────│ DataHandler     │
+│  Results     │     │ Panel         │     │ Processing      │
+└──────────────┘     └───────────────┘     └─────────────────┘
 ```
 
 ### Parameter Selection Flow
@@ -133,6 +145,21 @@ The application implements a simplified command pattern for plot management:
 ┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
 │  Generate    │◀────│  Parameter    │◀────│ Select All      │
 │  Plot        │     │  Selection    │     │ Visible Action  │
+└──────────────┘     └───────────────┘     └─────────────────┘
+```
+
+### Visualization Generation Flow
+
+```
+┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
+│  Parameter   │────▶│  Main Enmovito│────▶│ Visualization   │
+│  Selection   │     │  Application  │     │ Panel           │
+└──────────────┘     └───────────────┘     └─────────────────┘
+                                                   │
+                                                   ▼
+┌──────────────┐     ┌───────────────┐     ┌─────────────────┐
+│  Display     │◀────│  Create HTML  │◀────│ Generate Plotly │
+│  in Browser  │     │  File         │     │ Figure          │
 └──────────────┘     └───────────────┘     └─────────────────┘
 ```
 
@@ -182,38 +209,51 @@ The subplot configuration is designed to:
 - Group parameters by unit type for logical organization
 - Use Plotly's 'matches' property to link only x-axes between subplots
 
+### Modular Architecture
+
+The modular architecture provides several benefits:
+- Clear separation of concerns
+- Improved maintainability
+- Better code organization
+- Reduced code duplication
+- Easier testing and debugging
+- More flexible extension points
+
 ## Critical Implementation Paths
 
 ### Data Loading Path
 
-1. User selects CSV file
-2. Application reads header lines to understand the structure:
+1. User selects CSV file via the ControlPanel
+2. Main application passes the file path to the DataHandler
+3. DataHandler reads header lines to understand the structure:
    - First line contains airframe information (skipped)
    - Second line contains full parameter names with units
    - Third line contains abbreviated parameter names
-3. Application creates mappings between abbreviated and full parameter names
-4. CSV data is loaded using pandas, skipping the first two lines
-5. Numeric columns are identified for plotting
-6. Time columns are identified for x-axis options
-7. UI is updated with available parameters using full names for display
+4. DataHandler creates mappings between abbreviated and full parameter names
+5. CSV data is loaded using pandas, skipping the first two lines
+6. Numeric columns are identified for plotting
+7. Time columns are identified for x-axis options
+8. ControlPanel is updated with available parameters using full names for display
 
 ### Visualization Path
 
-1. User selects parameters (possibly after filtering by category)
+1. User selects parameters in the ControlPanel (possibly after filtering by category)
 2. User can click "Select All Visible" to select all currently visible parameters
-3. Application retrieves selected data from DataFrame using the actual column names
-4. Parameters are grouped by unit type
-5. Plotly figure is created with appropriate configuration
+3. User clicks "Generate Plot" button, triggering the plot_requested signal
+4. Main application receives the signal and calls the VisualizationPanel's generate_plot method
+5. VisualizationPanel retrieves selected data from DataFrame using the actual column names
+6. Parameters are grouped by unit type using DataHandler's extract_unit method
+7. Plotly figure is created with appropriate configuration
    - Subplots are created for each unit group
    - X-axes are linked for synchronized zooming
    - Y-axes remain independent for optimal scaling
-6. Figure is rendered to HTML at a specific file path
-7. HTML is displayed in PyQt WebEngineView
-8. Individual clear button is created for the plot
+8. Figure is rendered to HTML at a specific file path
+9. HTML is displayed in PyQt WebEngineView within the VisualizationPanel
+10. Individual clear button is created for the plot
 
 ### Parameter Selection Path
 
-1. User filters parameters by category or selects them directly
+1. User filters parameters by category or selects them directly in the ControlPanel
 2. When a category button is clicked:
    - If it's a new category, parameters are filtered to show only that category
    - If it's the same category again, all parameters are shown
@@ -224,15 +264,17 @@ The subplot configuration is designed to:
 
 ### Theming Path
 
-1. User selects theme (Dark or Light) using radio buttons
-2. Application loads the appropriate QSS file from the themes directory
-3. QSS is applied to the application using setStyleSheet
-4. QPalette is updated with appropriate colors for the selected theme
-5. Plotly visualizations are configured with matching colors for consistency
+1. User selects theme (Dark or Light) using radio buttons in the ControlPanel
+2. ControlPanel emits the theme_changed signal
+3. Main application receives the signal and calls the appropriate theme method
+4. Application loads the appropriate QSS file from the themes directory
+5. QSS is applied to the application using setStyleSheet
+6. QPalette is updated with appropriate colors for the selected theme
+7. Plotly visualizations are configured with matching colors for consistency
 
 ### Plot Management Path
 
-1. Each plot is created with its own container and clear button
+1. Each plot is created with its own container and clear button in the VisualizationPanel
 2. Clear button is connected to a specific method for that plot
 3. When clear button is clicked, only that specific plot is removed
 4. If all plots are removed, the placeholder is shown again
@@ -242,8 +284,8 @@ The subplot configuration is designed to:
 The system is designed with several extension points:
 
 1. **Additional Visualization Types**
-   - New tab widgets can be added to the visualization panel
-   - New plot generation methods can be implemented
+   - New tab widgets can be added to the VisualizationPanel
+   - New plot generation methods can be implemented in the VisualizationPanel
    - Individual plot management can be extended to new visualization types
 
 2. **Parameter Categories**
@@ -252,18 +294,18 @@ The system is designed with several extension points:
    - The "Select All Visible" functionality can be extended with additional selection options
 
 3. **Data Analysis Functions**
-   - Additional analysis methods can be added to process and visualize data
+   - Additional analysis methods can be added to the DataHandler
    - Statistical analysis can be integrated into the visualization
    - Trend line and curve fitting can be added to XY plots
 
 4. **Data Sources**
-   - The data loading mechanism can be extended to support different file formats
+   - The DataHandler can be extended to support different file formats
    - The header parsing logic can be adapted for different CSV structures
    - Real-time data visualization could be implemented in the future
 
 5. **User Interface Enhancements**
-   - Parameter search functionality can be added
-   - Custom plot templates can be implemented
+   - Parameter search functionality can be added to the ControlPanel
+   - Custom plot templates can be implemented in the VisualizationPanel
    - Additional theme options beyond dark and light
    - User preferences for default settings can be added
    - Session management for saving and loading visualization states

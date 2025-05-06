@@ -10,8 +10,6 @@ Enmovito (Engine Monitoring Visualization Tool) addresses the need for pilots, m
 
 2. **Parameter Correlation**: Understanding relationships between different engine parameters (e.g., RPM vs. manifold pressure, CHT vs. EGT) is crucial for engine health monitoring and troubleshooting. Enmovito enables easy creation of XY plots to visualize these relationships.
 
-3. **Time Series Analysis**: Tracking how engine parameters change over time helps identify trends, anomalies, and potential issues before they become critical. Enmovito's time series visualization makes this analysis intuitive.
-
 4. **Parameter Organization**: Aircraft engine logs contain numerous parameters, making it challenging to find relevant ones. Enmovito's categorization system (GPS, Altitude, Engine, Temperature, etc.) simplifies parameter selection.
 
 ## Target Users
@@ -35,7 +33,6 @@ Enmovito (Engine Monitoring Visualization Tool) addresses the need for pilots, m
 ### Interactive Exploration
 
 - Users should be able to zoom, pan, and hover over data points to see exact values
-- Switching between time series and XY plot views should be seamless
 - Changing parameters to visualize should be quick and responsive
 
 ### Insightful Visualization
@@ -50,7 +47,6 @@ Enmovito (Engine Monitoring Visualization Tool) addresses the need for pilots, m
 2. **Parameter Selection**: User chooses parameters to visualize, either individually or by category
 3. **Visualization**: System generates interactive plots based on selected parameters
 4. **Exploration**: User interacts with plots (zoom, pan, hover) to explore the data
-5. **Analysis**: User can switch between time series and XY plots to analyze different aspects of the data
 
 ## Value Proposition
 
