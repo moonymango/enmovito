@@ -34,6 +34,8 @@ The current focus is on:
   - Removed the `fahrenheit_to_celsius` function from enmovito.py as it has been moved to the DataHandler class
   - Removed the `setup_viz_panel` function from enmovito.py as it has been moved to the VisualizationPanel class
   - Refactored the `on_plot_requested` method to use the VisualizationPanel's generate_plot method
+  - Extracted the main window functionality from enmovito.py to a dedicated MainWindow class in gui/main_window.py
+  - Simplified enmovito.py to serve only as the application entry point
   - Cleaned up imports that were no longer needed after the refactoring
   - Updated references to use the DataHandler and VisualizationPanel methods instead of local implementations
   - Improved code organization with better separation of concerns
@@ -98,7 +100,6 @@ The current focus is on:
 ### Visualization Implementation
 
 - Integrated Plotly for interactive visualizations
-- Added XY plot functionality for parameter correlation analysis
 - Embedded Plotly visualizations in PyQt using QWebEngineView
 - Implemented synchronized x-axis zooming with independent y-axis scales
 

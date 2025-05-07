@@ -6,7 +6,6 @@ providing the user interface for parameter selection and control.
 """
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, 
     QPushButton, QGroupBox, QGridLayout, QRadioButton, QButtonGroup,

@@ -28,10 +28,10 @@ enmovito/
 ├── gui/
 │   ├── __init__.py
 │   ├── control_panel.py  # User interface for parameter selection
-│   ├── main_window.py    # Main application window (in progress)
+│   ├── main_window.py    # Main application window
 │   └── visualization.py  # Visualization components and plot generation
-├── utils.py              # Utility functions
-└── main.py               # Main application entry point (in progress)
+├── utils.py              # Utility functions (planned)
+└── main.py               # Main application entry point (planned)
 ```
 
 ### Key Components
@@ -90,7 +90,6 @@ The application implements an observer pattern through PyQt's signals and slots 
 The application uses factory-like methods to create visualizations:
 
 - VisualizationPanel.generate_plot() creates time series visualizations
-- VisualizationPanel.generate_xy_plot() creates XY scatter plot visualizations
 
 ### Command Pattern
 
@@ -182,7 +181,6 @@ Plotly was selected over alternatives like Matplotlib or PyQtGraph because it of
 - Modern, attractive visualizations
 - Good performance with time series data
 - Easy integration with PyQt through HTML embedding
-- Support for both time series and XY plots
 - Advanced subplot configuration options
 
 ### Data Processing: Pandas

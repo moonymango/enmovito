@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
+
 class DataHandler:
     """
     Handles data loading, processing, and management for the Enmovito application.

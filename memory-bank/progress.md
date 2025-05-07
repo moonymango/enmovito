@@ -162,8 +162,6 @@ As the project evolved, several key decisions shaped its current state:
    - Improved filtering of valid columns for display and analysis
 
 5. **Visualization Capabilities**
-   - Initially implemented basic time series plots
-   - Added XY plot functionality for parameter correlation analysis
    - Implemented synchronized x-axis zooming with independent y-axis scales
    - Enhanced subplot configuration for better visualization of parameters with different value ranges
 
@@ -203,8 +201,6 @@ Based on experience and user feedback, the project is evolving toward:
    - Parameter selection interface
 
 2. **Basic Visualization** - *Completed*
-   - Time series plotting functionality
-   - XY plot capability
    - Interactive plot features
 
 3. **Parameter Organization** - *Completed*
@@ -240,7 +236,7 @@ Based on experience and user feedback, the project is evolving toward:
    - ✅ Extracted data handling functionality to `data_handler.py`
    - ✅ Extracted control panel to `gui/control_panel.py`
    - ✅ Extracted visualization panel to `gui/visualization.py`
-   - 🔲 Extract main window to `gui/main_window.py`
+   - ✅ Extract main window to `gui/main_window.py`
    - 🔲 Create main application entry point in `main.py`
    - 🔲 Extract custom widgets to dedicated modules
    - ✅ Implement proper communication between components
@@ -249,6 +245,7 @@ Based on experience and user feedback, the project is evolving toward:
      - Moved `fahrenheit_to_celsius` to DataHandler class
      - Moved `setup_viz_panel` to VisualizationPanel class
      - Refactored `on_plot_requested` to use VisualizationPanel's generate_plot method
+     - Moved all main window functionality from Enmovito class to MainWindow class
 
 ### Upcoming Milestones
 
